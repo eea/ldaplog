@@ -38,6 +38,8 @@ class DBAgent(object):
         message_pattern = re.compile(r'^conn=(?P<conn>\d+)\s')
         query = LogRow.select()
         connection = {}
+        strips = []
+
         for row in query:
             message = row.message.strip()
             m = message_pattern.match(message)
@@ -55,14 +57,19 @@ class DBAgent(object):
 
                 if ' closed (connection lost)' in message:
                     this_conn = connection.pop(conn_id)
-                    log.info('%d messages in %d', len(this_conn), conn_id)
+                    strips.append(this_conn)
+                    log.debug('%d messages in %d', len(this_conn), conn_id)
 
         log.debug('open connections: %r', list(connection))
+        strips.extend(connection.values())
+        return strips
 
 
 def demo():
     dba = DBAgent(os.environ['DATABASE_URI'])
-    dba.get_ldap_messages()
+    strips = dba.get_ldap_messages()
+    from pprint import pprint as pp
+    pp(strips)
 
 
 if __name__ == '__main__':
