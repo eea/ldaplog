@@ -49,11 +49,15 @@ class DBAgent(object):
             conn_id = int(m.group('conn'))
 
             if ' ACCEPT ' in message:
-                assert conn_id not in connection
+                if conn_id in connection:
+                    raise RuntimeError("Found 'ACCEPT' for a "
+                                       "connection that is in progress")
                 connection[conn_id] = []
 
             else:
-                assert conn_id in connection
+                if conn_id not in connection:
+                    raise RuntimeError("Found log message for a connection "
+                                       "with no prior ACCEPT")
                 connection[conn_id].append({'message': message, 'id': row.id})
 
                 if ' closed (connection lost)' in message:
