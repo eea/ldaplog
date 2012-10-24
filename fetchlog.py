@@ -68,13 +68,14 @@ class DBAgent(object):
                 if conn_id not in connection:
                     raise RuntimeError("Found log message for a connection "
                                        "with no prior ACCEPT")
-                connection[conn_id].append({'message': message, 'id': row.id})
 
-                if ' closed (connection lost)' in message:
-                    this_conn = connection.pop(conn_id)
-                    strips.append(this_conn)
-                    rows_to_remove.extend(item['id'] for item in this_conn)
-                    log.debug('%d messages in %d', len(this_conn), conn_id)
+            connection[conn_id].append({'message': message, 'id': row.id})
+
+            if ' closed (connection lost)' in message:
+                this_conn = connection.pop(conn_id)
+                strips.append(this_conn)
+                rows_to_remove.extend(item['id'] for item in this_conn)
+                log.debug('%d messages in %d', len(this_conn), conn_id)
 
         log.debug('open connections: %r', list(connection))
         log.debug('log entries to remove: %r', rows_to_remove)
