@@ -34,11 +34,12 @@ class DBAgent(object):
                                 r'(?P<database>.*)$')
         db.init(**db_pattern.match(database_uri).groupdict())
 
-    def get_ldap_messages(self):
+    def get_ldap_messages(self, remove=False):
         message_pattern = re.compile(r'^conn=(?P<conn>\d+)\s')
         query = LogRow.select()
         connection = {}
         strips = []
+        rows_to_remove = []
 
         for row in query:
             message = row.message.strip()
@@ -53,14 +54,16 @@ class DBAgent(object):
 
             else:
                 assert conn_id in connection
-                connection[conn_id].append({'message': message})
+                connection[conn_id].append({'message': message, 'id': row.id})
 
                 if ' closed (connection lost)' in message:
                     this_conn = connection.pop(conn_id)
                     strips.append(this_conn)
+                    rows_to_remove.extend(item['id'] for item in this_conn)
                     log.debug('%d messages in %d', len(this_conn), conn_id)
 
         log.debug('open connections: %r', list(connection))
+        log.debug('log entries to remove: %r', rows_to_remove)
         strips.extend(connection.values())
         return strips
 
