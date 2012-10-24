@@ -26,6 +26,8 @@ class LogRow(Model):
 
 class DBAgent(object):
 
+    SYSLOG_TAG_PREFIX = 'slapd['
+
     def __init__(self, database_uri):
         db_pattern = re.compile(r'^mysql\://'
                                 r'(?P<user>[^\:]+)\:'
@@ -42,10 +44,18 @@ class DBAgent(object):
         rows_to_remove = []
 
         for row in query:
+            if not row.syslog_tag.startswith(self.SYSLOG_TAG_PREFIX):
+                rows_to_remove.append(row.id)
+                continue
+
             message = row.message.strip()
             m = message_pattern.match(message)
             if m is None:
-                continue
+                if message.endswith(' not indexed'):
+                    rows_to_remove.append(row.id)
+                    continue
+                raise RuntimeError("Can't parse message %r" % message)
+
             conn_id = int(m.group('conn'))
 
             if ' ACCEPT ' in message:
