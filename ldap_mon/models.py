@@ -1,16 +1,26 @@
 from django.db import models
 from datetime import datetime
 import re
+import logging
+
+
+logger = logging.getLogger('ldap_mon.models')
 
 
 class Server(models.Model):
 
     hostname = models.CharField(max_length=512)
 
+    def __unicode__(self):
+        return self.hostname
+
 
 class User(models.Model):
 
     username = models.CharField(max_length=256)
+
+    def __unicode__(self):
+        return self.username
 
 
 class Log(models.Model):
@@ -21,6 +31,9 @@ class Log(models.Model):
     user = models.ForeignKey(User)
     server = models.ForeignKey(Server)
     date = models.DateTimeField()
+
+    def __unicode__(self):
+        return '{} {} - {}'.format(self.user, self.server, self.date)
 
     @classmethod
     def add(cls, data):
@@ -33,6 +46,7 @@ class Log(models.Model):
         if not log_created and log.date < date:
             log.date = date
             log.save()
+        logger.debug('Log added %s' % log)
 
 
 SERVER_PATTERN = re.compile(r"""

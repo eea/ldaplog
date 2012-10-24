@@ -93,11 +93,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
 ROOT_URLCONF = 'ldap_mon.urls'
@@ -132,7 +128,30 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+
+    'formatters': {
+        'verbose': {
+            'format': '[%(levelname)s %(asctime)s %(process)d %(thread)d] %(message)s'
+        },
+        'object': {
+            'format': '[%(levelname)s %(asctime)s] %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
     'handlers': {
+        'ldap_stream': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'ldap_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'formatter': 'object',
+            'when': 'midnight',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -140,6 +159,11 @@ LOGGING = {
         }
     },
     'loggers': {
+        'ldap_mon': {
+            'handlers': ['ldap_stream', 'ldap_file'],
+            'propagate': True,
+        },
+
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
