@@ -80,12 +80,20 @@ class DBAgent(object):
         log.debug('open connections: %r', list(connection))
         log.debug('log entries to remove: %r', rows_to_remove)
         strips.extend(connection.values())
+
+        if remove and rows_to_remove:
+            with db.transaction():
+                count = LogRow.delete().filter(id__in=rows_to_remove).execute()
+                if count != len(rows_to_remove):
+                    log.warn("Tried to remove %d rows but %d were removed",
+                             len(rows_to_remove), count)
+
         return strips
 
 
 def demo():
     dba = DBAgent(os.environ['DATABASE_URI'])
-    strips = dba.get_ldap_messages()
+    strips = dba.get_ldap_messages(remove=True)
     from pprint import pprint as pp
     pp(strips)
 
