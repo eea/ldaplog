@@ -39,7 +39,7 @@ class DBAgent(object):
     def get_ldap_messages(self, remove=False):
         message_pattern = re.compile(r'^conn=(?P<conn>\d+)\s')
         query = LogRow.select()
-        connection = {}
+        strip_map = {}
         strips = []
         rows_to_remove = []
 
@@ -59,27 +59,27 @@ class DBAgent(object):
             conn_id = int(m.group('conn'))
 
             if ' ACCEPT ' in message:
-                if conn_id in connection:
+                if conn_id in strip_map:
                     raise RuntimeError("Found 'ACCEPT' for a "
                                        "connection that is in progress")
-                connection[conn_id] = []
+                strip_map[conn_id] = []
 
             else:
-                if conn_id not in connection:
+                if conn_id not in strip_map:
                     raise RuntimeError("Found log message for a connection "
                                        "with no prior ACCEPT")
 
-            connection[conn_id].append({'message': message, 'id': row.id})
+            strip_map[conn_id].append({'message': message, 'id': row.id})
 
             if ' closed (connection lost)' in message:
-                this_conn = connection.pop(conn_id)
+                this_conn = strip_map.pop(conn_id)
                 strips.append(this_conn)
                 rows_to_remove.extend(item['id'] for item in this_conn)
                 log.debug('%d messages in %d', len(this_conn), conn_id)
 
-        log.debug('open connections: %r', list(connection))
+        log.debug('open connections: %r', list(strip_map))
         log.debug('log entries to remove: %r', rows_to_remove)
-        strips.extend(connection.values())
+        strips.extend(strip_map.values())
 
         if remove and rows_to_remove:
             with db.transaction():
