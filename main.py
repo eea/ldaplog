@@ -24,6 +24,12 @@ bind_pattern = re.compile(r"""
     BIND\sdn="uid=(?P<user_id>[a-zA-Z0-9]+)
     """, re.X)
 
+close_conn_pattern = re.compile(r"""
+    conn=(?P<conn_id>[0-9]+)
+    \s.+\sclosed
+    """, re.X)
+
+
 def parse_message(data):
 
     assert isinstance(data, list)
@@ -32,6 +38,7 @@ def parse_message(data):
         resp = {}
         server_search = re.search(server_pattern, item['message'])
         bind_search = re.search(bind_pattern, item['message'])
+        close_conn_search = re.search(close_conn_pattern, item['message'])
 
         if server_search:
             resp.update(server_search.groupdict())
@@ -39,6 +46,9 @@ def parse_message(data):
         if bind_search:
             resp.update(bind_search.groupdict())
             resp['status'] = 'login'
+        if close_conn_search:
+            resp.update(close_conn_search.groupdict())
+            resp['status'] = 'closed'
 
         if resp:
             print resp

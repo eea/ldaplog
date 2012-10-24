@@ -1,4 +1,6 @@
 *.log
 *.pot
 *.pyc
+.DS_Store
+sandbox
 local_settings.py
