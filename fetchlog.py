@@ -73,7 +73,11 @@ class DBAgent(object):
                     raise RuntimeError("Found log message for a connection "
                                        "with no prior ACCEPT")
 
-            strip_map[conn_id].append({'message': message, 'id': row.id})
+            strip_map[conn_id].append({
+                'message': message,
+                'id': row.id,
+                'date': row.time.strftime('%Y-%m-%d %H:%M:%S'),
+            })
 
             if ' closed (connection lost)' in message:
                 this_conn = strip_map.pop(conn_id)
