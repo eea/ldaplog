@@ -38,10 +38,17 @@ class DBAgent(object):
 
     def get_ldap_messages(self, remove=False):
         message_pattern = re.compile(r'^conn=(?P<conn>\d+)\s')
+        message_close_pattern = re.compile(r'^conn=\d+\sfd=\d+ closed')
         query = LogRow.select()
         strip_map = {}
         strips = []
         rows_to_remove = []
+
+        def close_strip(strip_conn_id):
+            this_conn = strip_map.pop(strip_conn_id)
+            strips.append(this_conn)
+            rows_to_remove.extend(item['id'] for item in this_conn)
+            log.debug('%d messages in %d', len(this_conn), strip_conn_id)
 
         for row in query:
             if not row.syslog_tag.startswith(self.SYSLOG_TAG_PREFIX):
@@ -51,14 +58,15 @@ class DBAgent(object):
             message = row.message.strip()
 
             if message == "daemon: shutdown requested and initiated.":
-                raise RuntimeError("Don't konw how to handle shutdown message")
+                continue
+
+            if message.startswith('slapd shutdown:'):
+                continue
 
             m = message_pattern.match(message)
             if m is None:
-                if message.endswith(' not indexed'):
-                    rows_to_remove.append(row.id)
-                    continue
-                raise RuntimeError("Can't parse message %r" % message)
+                log.info("Can't parse message %r" % message)
+                continue
 
             conn_id = int(m.group('conn'))
 
@@ -79,11 +87,8 @@ class DBAgent(object):
                 'date': row.time.strftime('%Y-%m-%d %H:%M:%S'),
             })
 
-            if ' closed (connection lost)' in message:
-                this_conn = strip_map.pop(conn_id)
-                strips.append(this_conn)
-                rows_to_remove.extend(item['id'] for item in this_conn)
-                log.debug('%d messages in %d', len(this_conn), conn_id)
+            if message_close_pattern.match(message) is not None:
+                close_strip(conn_id)
 
         log.debug('open connections: %r', list(strip_map))
         log.debug('log entries to remove: %r', rows_to_remove)
