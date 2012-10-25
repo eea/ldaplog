@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from datetime import datetime
 import re
 import logging
@@ -83,3 +84,10 @@ def parse_message(data):
                 resp['server'] = server.get(resp['conn_id'])
                 Log.add(resp)
 
+
+def fetch_and_parse():
+    from fetchlog import DBAgent
+    dba = DBAgent(settings.RSYSLOG_DATABASE_URI)
+    for strip in dba.get_ldap_messages():  # TODO remove=True
+        logger.debug("parsing strip of %d events", len(strip))
+        parse_message(strip)
