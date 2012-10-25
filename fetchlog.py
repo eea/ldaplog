@@ -49,6 +49,10 @@ class DBAgent(object):
                 continue
 
             message = row.message.strip()
+
+            if message == "daemon: shutdown requested and initiated.":
+                raise RuntimeError("Don't konw how to handle shutdown message")
+
             m = message_pattern.match(message)
             if m is None:
                 if message.endswith(' not indexed'):
