@@ -146,12 +146,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        # 'ldap_file': {
-        #     'level': 'ERROR',
-        #     'class': 'logging.handlers.TimedRotatingFileHandler',
-        #     'formatter': 'object',
-        #     'when': 'midnight',
-        # },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -159,10 +153,10 @@ LOGGING = {
         }
     },
     'loggers': {
-        # 'ldap_mon': {
-        #     'handlers': ['ldap_stream', 'ldap_file'],
-        #     'propagate': True,
-        # },
+        'ldap_mon': {
+            'handlers': ['ldap_stream'],
+            'propagate': True,
+        },
 
         'django.request': {
             'handlers': ['mail_admins'],
