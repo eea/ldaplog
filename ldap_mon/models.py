@@ -52,7 +52,7 @@ class Log(models.Model):
 SERVER_PATTERN = re.compile(r"""
     conn=(?P<conn_id>[0-9]+)
     \s.+\s
-    ACCEPT\sfrom\sIP=(?P<server>.+)\s
+    ACCEPT\sfrom\sIP=(?P<server>.+):(?P<port>\d+)\s
     """, re.X)
 
 

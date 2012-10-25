@@ -9,7 +9,7 @@ DATASET_1 = [
     {'message': 'conn=1001 op=2 BIND dn="uid=johndoe,ou=Users,o=EIONET,l=Europe" method=128', 'date': '2012-07-03 23:06:42'},
     {'message': 'conn=1001 op=2 BIND dn="uid=johndoe,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0', 'date': '2012-07-03 23:06:42'},
 
-    {'message': 'conn=1001 fd=16 ACCEPT from IP=127.0.0.1:8080 (IP=0.0.0.0:389)', 'date': '2012-08-03 23:06:42'},
+    {'message': 'conn=1001 fd=16 ACCEPT from IP=127.0.0.2:8080 (IP=0.0.0.0:389)', 'date': '2012-08-03 23:06:42'},
     {'message': 'conn=1001 op=17 BIND dn="uid=johnsmith,ou=Users,o=EIONET,l=Europe" method=128', 'date': '2012-08-03 23:06:42'},
     {'message': 'conn=1001 op=17 BIND dn="uid=johnsmith,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0', 'date': '2012-08-03 23:06:45'},
     {'message': 'conn=1001 op=17 BIND dn="uid=johnsmith,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0', 'date': '2012-08-03 23:06:42'},
@@ -32,12 +32,12 @@ class LdapMonTestCase(unittest.TestCase):
     def test_parse_message_log_date(self):
         from ldap_mon.models import Log
         log = Log.objects.filter(user__username='johndoe',
-                                 server__hostname='127.0.0.1:58286')
+                                 server__hostname='127.0.0.1')
         self.assertEqual(1, log.count())
         self.assertEqual('2012-07-03 23:06:42', str(log[0].date))
 
         log = Log.objects.filter(user__username='johnsmith',
-                                 server__hostname='127.0.0.1:8080')
+                                 server__hostname='127.0.0.2')
         self.assertEqual(1, log.count())
         self.assertEqual('2012-08-03 23:06:45', str(log[0].date))
 
@@ -51,8 +51,8 @@ class LdapMonTestCase(unittest.TestCase):
 
     def test_parse_message_servers(self):
         from ldap_mon.models import Server
-        server = Server.objects.filter(hostname='127.0.0.1:58286')
+        server = Server.objects.filter(hostname='127.0.0.1')
         self.assertEqual(1, server.count())
 
-        server = Server.objects.filter(hostname='127.0.0.1:8080')
+        server = Server.objects.filter(hostname='127.0.0.2')
         self.assertEqual(1, server.count())
