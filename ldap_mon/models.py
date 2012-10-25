@@ -10,10 +10,10 @@ logger = logging.getLogger('ldap_mon.models')
 
 class Server(models.Model):
 
-    hostname = models.CharField(max_length=512)
+    host = models.CharField(max_length=512)
 
     def __unicode__(self):
-        return self.hostname
+        return self.host
 
 
 class User(models.Model):
@@ -40,7 +40,7 @@ class Log(models.Model):
     def add(cls, data):
         assert 'date' in data
         date = datetime.strptime(data['date'], '%Y-%m-%d %H:%M:%S')
-        server, server_created = Server.objects.get_or_create(hostname=data['server'])
+        server, server_created = Server.objects.get_or_create(host=data['server'])
         user, user_created = User.objects.get_or_create(username=data['user_id'])
         log, log_created= cls.objects.get_or_create(user=user, server=server,
                                                     defaults={'date': date})

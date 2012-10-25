@@ -32,12 +32,12 @@ class LdapMonTestCase(unittest.TestCase):
     def test_parse_message_log_date(self):
         from ldap_mon.models import Log
         log = Log.objects.filter(user__username='johndoe',
-                                 server__hostname='127.0.0.1')
+                                 server__host='127.0.0.1')
         self.assertEqual(1, log.count())
         self.assertEqual('2012-07-03 23:06:42', str(log[0].date))
 
         log = Log.objects.filter(user__username='johnsmith',
-                                 server__hostname='127.0.0.2')
+                                 server__host='127.0.0.2')
         self.assertEqual(1, log.count())
         self.assertEqual('2012-08-03 23:06:45', str(log[0].date))
 
@@ -51,8 +51,8 @@ class LdapMonTestCase(unittest.TestCase):
 
     def test_parse_message_servers(self):
         from ldap_mon.models import Server
-        server = Server.objects.filter(hostname='127.0.0.1')
+        server = Server.objects.filter(host='127.0.0.1')
         self.assertEqual(1, server.count())
 
-        server = Server.objects.filter(hostname='127.0.0.2')
+        server = Server.objects.filter(host='127.0.0.2')
         self.assertEqual(1, server.count())
