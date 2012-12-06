@@ -15,6 +15,9 @@ Configuration variables
 =======================
 The following environment variables are used for configuration:
 
+``DEBUG``
+    If set to ``on``, the application will start in debug mode.
+
 ``RSYSLOG_DATABASE_URI``
     URI of MySQL database where `rsyslog` dumps log records. Used by
     `fetchlog`.

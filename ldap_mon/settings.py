@@ -1,6 +1,6 @@
 import os
 
-DEBUG = True
+DEBUG = bool(os.environ.get('DEBUG') == 'on')
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = ()
