@@ -29,6 +29,9 @@ The following environment variables are used for configuration:
 ``SECRET_KEY``
     Random secret used for session security.
 
+``STATIC_URL``
+    URL where static media files are served.
+
 ``ALLOW_REVERSE_PROXY``
     If set to ``on``, look for HTTP headers set by a proxy, and change
     the request environment accordingly.

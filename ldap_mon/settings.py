@@ -33,7 +33,7 @@ USE_TZ = False
 MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = ''
-STATIC_URL = '/static/'
+STATIC_URL = os.environ.get('STATIC_URL', '/static/')
 STATICFILES_DIRS = ()
 
 STATICFILES_FINDERS = (
