@@ -1,3 +1,5 @@
+import os
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -15,6 +17,8 @@ DATABASES = {
         'PORT': '',
     }
 }
+
+RSYSLOG_DATABASE_URI = os.environ['RSYSLOG_DATABASE_URI']
 
 TIME_ZONE = 'America/Chicago'
 

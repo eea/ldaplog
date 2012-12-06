@@ -105,7 +105,7 @@ class DBAgent(object):
 
 
 def demo():
-    dba = DBAgent(os.environ['DATABASE_URI'])
+    dba = DBAgent(os.environ['RSYSLOG_DATABASE_URI'])
     strips = dba.get_ldap_messages(remove=True)
     from pprint import pprint as pp
     pp(strips)
