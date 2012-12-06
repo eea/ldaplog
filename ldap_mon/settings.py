@@ -116,6 +116,7 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'ldap_mon',
+    'gunicorn',
 )
 
 # A sample logging configuration. The only tangible logging
