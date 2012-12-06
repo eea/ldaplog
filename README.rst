@@ -26,6 +26,9 @@ The following environment variables are used for configuration:
     URI of `ldap_mon` application database where statistics will be
     saved.
 
+``SECRET_KEY``
+    Random secret used for session security.
+
 ``ALLOW_REVERSE_PROXY``
     If set to ``on``, look for HTTP headers set by a proxy, and change
     the request environment accordingly.
