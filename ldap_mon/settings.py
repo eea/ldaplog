@@ -73,46 +73,25 @@ INSTALLED_APPS = (
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(asctime)s %(module)s %(levelname)s %(message)s',
+        },
+    },
     'filters': {
         'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-
-    'formatters': {
-        'verbose': {
-            'format': '[%(levelname)s %(asctime)s %(process)d %(thread)d] %(message)s'
-        },
-        'object': {
-            'format': '[%(levelname)s %(asctime)s] %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
+            '()': 'django.utils.log.RequireDebugFalse',
         },
     },
     'handlers': {
-        'ldap_stream': {
-            'level': 'DEBUG',
+        'stderr': {
+            'level': 'DEBUG' if DEBUG else 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'console',
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
     },
-    'loggers': {
-        'ldap_mon': {
-            'handlers': ['ldap_stream'],
-            'propagate': True,
-        },
-
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
+    'root': {
+        'handlers': ['stderr'],
     }
 }
 
