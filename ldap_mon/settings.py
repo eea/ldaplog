@@ -7,16 +7,17 @@ ADMINS = ()
 
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+
+_database_uri = os.environ['DATABASE_URI']
+if _database_uri.startswith('sqlite:///'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': _database_uri[len('sqlite:///'):],
+        }
     }
-}
+else:
+    raise RuntimeError("Can't parse database uri %r" % _database_uri)
 
 RSYSLOG_DATABASE_URI = os.environ['RSYSLOG_DATABASE_URI']
 

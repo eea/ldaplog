@@ -18,3 +18,7 @@ The following environment variables are used for configuration:
 ``RSYSLOG_DATABASE_URI``
     URI of MySQL database where `rsyslog` dumps log records. Used by
     `fetchlog`.
+
+``DATABASE_URI``
+    URI of `ldap_mon` application database where statistics will be
+    saved.
