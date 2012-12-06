@@ -25,3 +25,7 @@ The following environment variables are used for configuration:
 ``DATABASE_URI``
     URI of `ldap_mon` application database where statistics will be
     saved.
+
+``TARGET``
+    Deployment host and directory, used by ``fab deploy``. Example:
+    ``edw@capybara:/var/local/ldap_mon``.
