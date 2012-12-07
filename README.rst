@@ -19,12 +19,14 @@ Installation
 `Foreman`, `honcho` or `Sarge`. The ``fab deploy`` command deploys to a
 `Sarge` server based on the ``TARGET`` environment variable.
 
-Run the following command to read log entries from the database. The
-``-r`` flag removes old or irrelevant entries.
+
+Place the following command in a cron job to read log entries from the
+database. The ``remove=on`` flag removes old or irrelevant entries.
+Don't forget to set the ``CRON_KEY`` variable.
 
 ::
 
-    python manage.py parseldap -r
+    curl -F 'remove=on' -F 'key=THEKEY' 'http://localhost:38200/fetch_and_parse'
 
 
 Configuration variables
@@ -55,6 +57,9 @@ The following environment variables are used for configuration:
 ``TARGET``
     Deployment host and directory, used by ``fab deploy``. Example:
     ``edw@capybara:/var/local/ldap_mon``.
+
+``CRON_KEY``
+    Secret key used by a cron job when calling `fetch_and_parse`.
 
 
 Configuring rsyslog-mysql
