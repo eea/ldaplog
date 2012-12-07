@@ -95,3 +95,28 @@ LOGGING = {
         'handlers': ['stderr'],
     }
 }
+
+
+_auth_ldap_server = os.environ.get('AUTH_LDAP_SERVER')
+if _auth_ldap_server:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch
+
+    AUTH_LDAP_SERVER_URI = _auth_ldap_server
+    AUTH_LDAP_BIND_DN = ""
+    AUTH_LDAP_BIND_PASSWORD = ""
+
+    AUTH_LDAP_USER_SEARCH = LDAPSearch("o=EIONET,l=Europe",
+                                       ldap.SCOPE_SUBTREE,
+                                       "(uid=%(user)s)")
+
+    AUTH_LDAP_USER_ATTR_MAP = {
+        "first_name": "givenName",
+        "last_name": "sn",
+        "email": "mail",
+    }
+
+    AUTHENTICATION_BACKENDS = (
+        'django_auth_ldap.backend.LDAPBackend',
+        'django.contrib.auth.backends.ModelBackend',
+    )
