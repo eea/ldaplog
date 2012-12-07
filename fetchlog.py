@@ -72,14 +72,16 @@ class DBAgent(object):
 
             if ' ACCEPT ' in message:
                 if conn_id in strip_map:
-                    raise RuntimeError("Found 'ACCEPT' for a "
-                                       "connection that is in progress")
+                    raise RuntimeError("row %d: Found 'ACCEPT' for a "
+                                       "connection that is in progress"
+                                       % row.id)
                 strip_map[conn_id] = []
 
             else:
                 if conn_id not in strip_map:
-                    raise RuntimeError("Found log message for a connection "
-                                       "with no prior ACCEPT")
+                    raise RuntimeError("row %d: Found log message for a "
+                                       "connection with no prior ACCEPT"
+                                       % row.id)
 
             strip_map[conn_id].append({
                 'message': message,
