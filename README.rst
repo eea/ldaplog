@@ -11,6 +11,22 @@ slapd log records, and any log records from unknown sources, so that the
 log database doesn't grow indefinitely.
 
 
+Installation
+============
+`ldap_mon` requires Python 2.7. Dependencies are listed in
+``requirements.txt``. The command to run the web server is listed in
+``Procfile``. The easiest way to run the application is with a tool like
+`Foreman`, `honcho` or `Sarge`. The ``fab deploy`` command deploys to a
+`Sarge` server based on the ``TARGET`` environment variable.
+
+Run the following command to read log entries from the database. The
+``-r`` flag removes old or irrelevant entries.
+
+::
+
+    python manage.py parseldap -r
+
+
 Configuration variables
 =======================
 The following environment variables are used for configuration:
