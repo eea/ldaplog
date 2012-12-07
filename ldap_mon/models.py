@@ -85,9 +85,9 @@ def parse_message(data):
                 Log.add(resp)
 
 
-def fetch_and_parse():
+def fetch_and_parse(remove=False):
     from fetchlog import DBAgent
     dba = DBAgent(settings.RSYSLOG_DATABASE_URI)
-    for strip in dba.get_ldap_messages():  # TODO remove=True
+    for strip in dba.get_ldap_messages(remove=remove):
         logger.debug("parsing strip of %d events", len(strip))
         parse_message(strip)
