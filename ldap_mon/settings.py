@@ -120,3 +120,11 @@ if _auth_ldap_server:
         'django_auth_ldap.backend.LDAPBackend',
         'django.contrib.auth.backends.ModelBackend',
     )
+
+
+_sentry_dsn = os.environ.get('SENTRY_DSN')
+if _sentry_dsn:
+    INSTALLED_APPS += ('raven.contrib.django',)
+    RAVEN_CONFIG = {
+        'dsn': _sentry_dsn,
+    }

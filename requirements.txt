@@ -4,3 +4,4 @@ peewee==2.0.2
 gunicorn==0.16.1
 django-auth-ldap==1.1.2
 python-ldap==2.4.10
+raven==2.0.10
