@@ -39,7 +39,7 @@ class DBAgent(object):
     def get_ldap_messages(self, remove=False):
         message_pattern = re.compile(r'^conn=(?P<conn>\d+)\s')
         message_close_pattern = re.compile(r'^conn=\d+\sfd=\d+ closed')
-        query = LogRow.select()
+        query = LogRow.select().order_by(LogRow.id)
         strip_map = {}
         strips = []
         rows_to_remove = []
