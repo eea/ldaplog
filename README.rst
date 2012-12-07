@@ -39,3 +39,25 @@ The following environment variables are used for configuration:
 ``TARGET``
     Deployment host and directory, used by ``fab deploy``. Example:
     ``edw@capybara:/var/local/ldap_mon``.
+
+
+Configuring rsyslog-mysql
+=========================
+There is a good howto_ for configuring `rsyslog` to write log entries to
+`MySQL`. Here's the gist of it:
+
+.. _howto: http://www.rsyslog.com/doc/rsyslog_mysql.html
+
+1. Make sure the `rsyslog-mysql` backend is installed: ``yum install
+   rsyslog-mysql``
+
+2. Create a MySQL database with the rsyslog schema. There is a
+   ``createDB.sql`` script (e.g. in
+   ``/usr/share/doc/rsyslog-mysql-5.8.10/createDB.sql``). You may have
+   to remove the first two lines, they hardcode the database name.
+
+3. Update the configuration file. Add the following lines in the right
+   place, then restart the `rsyslog` service::
+
+    $ModLoad ommysql
+    local4.* :ommysql:db_host,db_name,db_user,db_password
