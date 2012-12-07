@@ -1,3 +1,4 @@
+from functools import wraps
 from django.views.generic.list import ListView
 from django.http import HttpResponse
 from ldap_mon import models
@@ -13,8 +14,15 @@ class Log(ListView):
     paginate_by = PER_PAGE
 
 
+def admin_only(view):
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return HttpResponse("Must be administrator.")
+        return view(request, *args, **kwargs)
+    return wrapper
+
+
+@admin_only
 def crashme(request):
-    if request.user.is_superuser:
-        raise RuntimeError("Crashing, as requested.")
-    else:
-        return HttpResponse("Must be administrator.")
+    raise RuntimeError("Crashing, as requested.")
