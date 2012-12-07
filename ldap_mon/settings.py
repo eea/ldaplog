@@ -21,6 +21,8 @@ else:
 
 RSYSLOG_DATABASE_URI = os.environ['RSYSLOG_DATABASE_URI']
 
+CRON_KEY = os.environ.get('CRON_KEY', '')
+
 TIME_ZONE = 'Europe/Copenhagen'
 
 LANGUAGE_CODE = 'en-us'
