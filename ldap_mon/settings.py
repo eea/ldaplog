@@ -126,7 +126,12 @@ if _auth_ldap_server:
 
 _sentry_dsn = os.environ.get('SENTRY_DSN')
 if _sentry_dsn:
+    import logging
+    from raven.handlers.logging import SentryHandler
+    from raven.contrib.django.models import client as _sentry_client
     INSTALLED_APPS += ('raven.contrib.django',)
     RAVEN_CONFIG = {
         'dsn': _sentry_dsn,
     }
+    _sentry_handler = SentryHandler(client=_sentry_client)
+    logging.getLogger('ldap_mon').addHandler(_sentry_handler)
