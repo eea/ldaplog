@@ -1,11 +1,17 @@
 import os
 import re
 import logging
+from datetime import datetime
 from peewee import (Model, MySQLDatabase,
                     TextField, IntegerField, DateTimeField, CharField)
 
 
 log = logging.getLogger(__name__)
+delete_log = logging.getLogger(__name__ + '.delete')
+delete_log.propagate = False
+if 'DELETE_LOG_FILE' in os.environ:
+    delete_log.addHandler(logging.FileHandler(os.environ['DELETE_LOG_FILE']))
+    delete_log.setLevel(logging.DEBUG)
 
 
 db = MySQLDatabase(None)
@@ -96,7 +102,15 @@ class DBAgent(object):
         log.debug('log entries to remove: %r', rows_to_remove)
         strips.extend(strip_map.values())
 
-        if remove and rows_to_remove:
+        if rows_to_remove and delete_log.isEnabledFor(logging.DEBUG):
+            delete_log.debug("Begin removing %d rows at %s",
+                             len(rows_to_remove),
+                             datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            query = LogRow.select().filter(id__in=rows_to_remove)
+            for row in query.execute():
+                delete_log.debug("%d: %r", row.id, row.message)
+
+        if rows_to_remove and remove:
             with db.transaction():
                 count = LogRow.delete().filter(id__in=rows_to_remove).execute()
                 if count != len(rows_to_remove):

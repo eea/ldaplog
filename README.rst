@@ -61,6 +61,10 @@ The following environment variables are used for configuration:
 ``CRON_KEY``
     Secret key used by a cron job when calling `fetch_and_parse`.
 
+``DELETE_LOG_FILE``
+    If set, when removing old log entries from the database, they are
+    also written to this file, for debugging.
+
 
 Configuring rsyslog-mysql
 =========================
