@@ -1,4 +1,19 @@
 import re
+import sqlalchemy as sa
+from sqlalchemy.ext.declarative import declarative_base
+
+Model = declarative_base()
+
+
+class LogRecord(Model):
+
+    __tablename__ = 'SystemEvents'
+
+    id = sa.Column('ID', sa.Integer, primary_key=True)
+    time = sa.Column('ReceivedAt', sa.DateTime)
+    host = sa.Column('FromHost', sa.String)
+    syslog_tag = sa.Column('SysLogTag', sa.String)
+    message = sa.Column('Message', sa.Text)
 
 
 class LogParser(object):
