@@ -5,6 +5,14 @@ from nose.tools import assert_equal
 def _log_fixture(time, messages):
     return [(time, msg) for msg in messages.strip().splitlines()]
 
+
+def _create_memory_db(metadata):
+    import sqlalchemy, sqlalchemy.orm
+    engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
+    metadata.create_all(engine)
+    return sqlalchemy.orm.sessionmaker(bind=engine)
+
+
 TIME = datetime(2013, 1, 27, 13, 34, 55)
 
 
@@ -41,15 +49,10 @@ def test_parse_two_interleaved_binds():
 
 
 def test_parse_records_from_sql():
-    import sqlalchemy, sqlalchemy.orm
     import logparser
-    engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
-    Session = sqlalchemy.orm.sessionmaker(bind=engine)
-    logparser.Model.metadata.create_all(engine)
-
+    Session = _create_memory_db(logparser.Model.metadata)
     session = Session()
     for time, message in LOG_ONE_BIND:
         session.add(logparser.LogRecord(time=time, message=message))
-
     assert_equal(logparser.parse_sql(session),
                  [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])
