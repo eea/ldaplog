@@ -1,30 +1,38 @@
 import re
 
-_connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
-_accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>[^:]+):\d+ ')
-_bind_pattern  = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* mech=SIMPLE ')
 
-def parse(log_records):
-    out = []
-    connections = {}
+class LogParser(object):
 
-    for time, message in log_records:
-        connection_match = _connection_pattern.search(message)
-        conn = connections.setdefault(connection_match.group('id'), {})
+    connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
+    accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>[^:]+):\d+ ')
+    bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* mech=SIMPLE ')
 
-        accept_match = _accept_pattern.search(message)
+    def __init__(self):
+        self.connections = {}
+        self.out = []
+
+    def handle_record(self, time, message):
+        connection_match = self.connection_pattern.search(message)
+        conn = self.connections.setdefault(connection_match.group('id'), {})
+
+        accept_match = self.accept_pattern.search(message)
         if accept_match:
             conn['remote_addr'] = accept_match.group('addr')
-            continue
+            return
 
-        bind_match = _bind_pattern.search(message)
+        bind_match = self.bind_pattern.search(message)
         if bind_match:
             event = {
                 'time': time,
                 'remote_addr': conn['remote_addr'],
                 'uid': bind_match.group('uid'),
             }
-            out.append(event)
-            continue
+            self.out.append(event)
+            return
 
-    return out
+
+def parse(log_records):
+    parser = LogParser()
+    for line in log_records:
+        parser.handle_record(*line)
+    return parser.out
