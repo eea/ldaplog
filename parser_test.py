@@ -38,3 +38,18 @@ def test_parse_two_interleaved_binds():
         {'remote_addr': '127.0.0.1', 'uid': 'uz1', 'time': TIME},
         {'remote_addr': '127.0.0.2', 'uid': 'uz2', 'time': TIME},
     ])
+
+
+def test_parse_records_from_sql():
+    import sqlalchemy, sqlalchemy.orm
+    import logparser
+    engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
+    Session = sqlalchemy.orm.sessionmaker(bind=engine)
+    logparser.Model.metadata.create_all(engine)
+
+    session = Session()
+    for time, message in LOG_ONE_BIND:
+        session.add(logparser.LogRecord(time=time, message=message))
+
+    assert_equal(logparser.parse_sql(session),
+                 [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])

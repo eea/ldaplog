@@ -51,3 +51,7 @@ def parse(log_records):
     for line in log_records:
         parser.handle_record(*line)
     return parser.out
+
+
+def parse_sql(session):
+    return parse((r.time, r.message) for r in session.query(LogRecord))
