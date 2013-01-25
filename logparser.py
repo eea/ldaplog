@@ -1,6 +1,10 @@
 import re
+import logging
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 Model = declarative_base()
 
@@ -28,12 +32,22 @@ class LogParser(object):
 
     def handle_record(self, time, message):
         connection_match = self.connection_pattern.search(message)
-        conn = self.connections.setdefault(connection_match.group('id'), {})
+        connection_id = connection_match.group('id')
 
         accept_match = self.accept_pattern.search(message)
         if accept_match:
-            conn['remote_addr'] = accept_match.group('addr')
+            if connection_id in self.connections:
+                log.warn("Found ACCEPT for existing connection")
+            self.connections[connection_id] = {
+                'remote_addr': accept_match.group('addr'),
+            }
             return
+
+        else:
+            if connection_id not in self.connections:
+                log.warn("Found record for connection with no prior ACCEPT")
+                return
+            conn = self.connections[connection_id]
 
         bind_match = self.bind_pattern.search(message)
         if bind_match:
