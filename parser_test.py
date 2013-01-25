@@ -21,6 +21,12 @@ def _parse_lines(lines):
     return parser.out
 
 
+def _insert_log_records(session, log_records):
+    import logparser
+    for time, message in log_records:
+        session.add(logparser.LogRecord(time=time, message=message))
+
+
 TIME = datetime(2013, 1, 27, 13, 34, 55)
 
 
@@ -58,8 +64,7 @@ def test_parse_records_from_sql():
     import logparser
     Session = _create_memory_db(logparser.Model.metadata)
     session = Session()
-    for time, message in LOG_ONE_BIND:
-        session.add(logparser.LogRecord(time=time, message=message))
+    _insert_log_records(session, LOG_ONE_BIND)
     assert_equal(logparser.parse_sql(session),
                  [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])
 
@@ -67,7 +72,6 @@ def test_consumed_records_are_removed_from_sql():
     import logparser
     Session = _create_memory_db(logparser.Model.metadata)
     session = Session()
-    for time, message in LOG_ONE_BIND:
-        session.add(logparser.LogRecord(time=time, message=message))
+    _insert_log_records(session, LOG_ONE_BIND)
     logparser.parse_sql(session)
     assert_equal(session.query(logparser.LogRecord).all(), [])
