@@ -93,6 +93,22 @@ class LogParser(object):
         self.log.debug("Dumping state %r", state)
         return state
 
+    def parse_sql(self, session):
+        to_remove = []
+
+        self.load_state([_to_dict(row) for row in session.query(LogParserState)])
+        session.query(LogParserState).delete()
+
+        for record in session.query(LogRecord):
+            self.log.record_id = record.id
+            self.handle_record(record.time, record.message)
+            to_remove.append(record.id)
+
+        to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
+        to_remove.delete(synchronize_session=False)
+
+        session.add_all([LogParserState(**conn) for conn in self.dump_state()])
+
 
 _to_dict = lambda row: {c.name: getattr(row, c.name)
                         for c in row.__table__.columns}
@@ -100,19 +116,5 @@ _to_dict = lambda row: {c.name: getattr(row, c.name)
 
 def parse_sql(session):
     parser = LogParser()
-    to_remove = []
-
-    parser.load_state([_to_dict(row) for row in session.query(LogParserState)])
-    session.query(LogParserState).delete()
-
-    for record in session.query(LogRecord):
-        parser.log.record_id = record.id
-        parser.handle_record(record.time, record.message)
-        to_remove.append(record.id)
-
-    to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
-    to_remove.delete(synchronize_session=False)
-
-    session.add_all([LogParserState(**conn) for conn in parser.dump_state()])
-
+    parser.parse_sql(session)
     return parser.out
