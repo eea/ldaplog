@@ -75,3 +75,26 @@ def test_consumed_records_are_removed_from_sql():
     _insert_log_records(session, LOG_ONE_BIND)
     logparser.parse_sql(session)
     assert_equal(session.query(logparser.LogRecord).all(), [])
+
+
+LOG_CHUNKS_1 = _log_fixture(TIME, """
+conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
+""")
+
+LOG_CHUNKS_2 = _log_fixture(TIME, """
+conn=1007 op=2 BIND dn="uid=uzer,ou=users,o=eionet,l=europe" method=128
+conn=1007 op=2 BIND dn="uid=uzer,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
+conn=1007 op=3 UNBIND
+conn=1007 fd=18 closed
+""")
+
+def test_state_is_saved_for_unclosed_connections():
+    import logparser
+    Session = _create_memory_db(logparser.Model.metadata)
+    session = Session()
+    _insert_log_records(session, LOG_CHUNKS_1)
+    assert_equal(logparser.parse_sql(session), [])
+    _insert_log_records(session, LOG_CHUNKS_2)
+    assert_equal(logparser.parse_sql(session),
+                 [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])

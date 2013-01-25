@@ -20,6 +20,15 @@ class LogRecord(Model):
     message = sa.Column('Message', sa.Text)
 
 
+class LogParserState(Model):
+
+    __tablename__ = 'ldapmon_state'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    connection_id = sa.Column(sa.Integer)
+    remote_addr = sa.Column(sa.String)
+
+
 class LogRowAdapter(logging.LoggerAdapter):
 
     def __init__(self, logger):
@@ -44,7 +53,7 @@ class LogParser(object):
 
     def handle_record(self, time, message):
         connection_match = self.connection_pattern.search(message)
-        connection_id = connection_match.group('id')
+        connection_id = int(connection_match.group('id'))
 
         accept_match = self.accept_pattern.search(message)
         if accept_match:
@@ -71,18 +80,39 @@ class LogParser(object):
             self.out.append(event)
             return
 
+    def load_state(self, state):
+        self.log.debug("Loading state %r", state)
+        for row in state:
+            self.connections[row['connection_id']] = {
+                'remote_addr': row['remote_addr'],
+            }
+
+    def dump_state(self):
+        state = [{'connection_id': k, 'remote_addr': v['remote_addr']}
+                 for k, v in self.connections.items()]
+        self.log.debug("Dumping state %r", state)
+        return state
+
+
+_to_dict = lambda row: {c.name: getattr(row, c.name)
+                        for c in row.__table__.columns}
+
 
 def parse_sql(session):
     parser = LogParser()
     to_remove = []
-    query = session.query(LogRecord)
 
-    for record in query:
+    parser.load_state([_to_dict(row) for row in session.query(LogParserState)])
+    session.query(LogParserState).delete()
+
+    for record in session.query(LogRecord):
         parser.log.record_id = record.id
         parser.handle_record(record.time, record.message)
         to_remove.append(record.id)
 
-    rows_to_remove = query.filter(LogRecord.id.in_(to_remove))
-    rows_to_remove.delete(synchronize_session=False)
+    to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
+    to_remove.delete(synchronize_session=False)
+
+    session.add_all([LogParserState(**conn) for conn in parser.dump_state()])
 
     return parser.out
