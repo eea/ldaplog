@@ -80,24 +80,16 @@ class LogParser(object):
             self.out.append(event)
             return
 
-    def load_state(self, state):
-        self.log.debug("Loading state %r", state)
-        for row in state:
-            self.connections[row['connection_id']] = {
-                'remote_addr': row['remote_addr'],
-            }
-
-    def dump_state(self):
-        state = [{'connection_id': k, 'remote_addr': v['remote_addr']}
-                 for k, v in self.connections.items()]
-        self.log.debug("Dumping state %r", state)
-        return state
-
     def parse_sql(self, session):
-        to_remove = []
-
-        self.load_state([_to_dict(row) for row in session.query(LogParserState)])
+        for row in session.query(LogParserState):
+            self.connections[row.connection_id] = {
+                'remote_addr': row.remote_addr,
+            }
         session.query(LogParserState).delete()
+        self.log.debug("Done loading existing connections: %r",
+                       self.connections.keys())
+
+        to_remove = []
 
         for record in session.query(LogRecord):
             self.log.record_id = record.id
@@ -107,7 +99,11 @@ class LogParser(object):
         to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
         to_remove.delete(synchronize_session=False)
 
-        session.add_all([LogParserState(**conn) for conn in self.dump_state()])
+        self.log.debug("Dumping existing connections: %r",
+                       self.connections.keys())
+        session.add_all([LogParserState(connection_id=conn_id,
+                                        remote_addr=conn['remote_addr'])
+                         for conn_id, conn in self.connections.iteritems()])
 
 
 _to_dict = lambda row: {c.name: getattr(row, c.name)
