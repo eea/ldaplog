@@ -46,12 +46,8 @@ class LogParser(object):
             return
 
 
-def parse(log_records):
-    parser = LogParser()
-    for line in log_records:
-        parser.handle_record(*line)
-    return parser.out
-
-
 def parse_sql(session):
-    return parse((r.time, r.message) for r in session.query(LogRecord))
+    parser = LogParser()
+    for record in session.query(LogRecord):
+        parser.handle_record(record.time, record.message)
+    return parser.out

@@ -14,8 +14,11 @@ def _create_memory_db(metadata):
 
 
 def _parse_lines(lines):
-    from logparser import parse
-    return parse(lines)
+    import logparser
+    parser = logparser.LogParser()
+    for l in lines:
+        parser.handle_record(*l)
+    return parser.out
 
 
 TIME = datetime(2013, 1, 27, 13, 34, 55)
