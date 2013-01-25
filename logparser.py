@@ -45,6 +45,7 @@ class LogParser(object):
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
     accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>[^:]+):\d+ ')
     bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* mech=SIMPLE ')
+    close_pattern = re.compile(r' closed$')
 
     def __init__(self):
         self.connections = {}
@@ -69,6 +70,11 @@ class LogParser(object):
                 self.log.warning("Found record with no prior ACCEPT")
                 return
             conn = self.connections[connection_id]
+
+        close_match = self.close_pattern.search(message)
+        if close_match:
+            del self.connections[connection_id]
+            return
 
         bind_match = self.bind_pattern.search(message)
         if bind_match:

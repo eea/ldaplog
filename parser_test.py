@@ -60,6 +60,22 @@ def test_parse_two_interleaved_binds():
     ])
 
 
+LOG_REUSED_CONNECTION_ID = _log_fixture(TIME, """
+conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
+conn=1007 op=2 BIND dn="uid=uz1,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 fd=18 closed
+conn=1007 fd=19 ACCEPT from IP=127.0.0.2:36676 (IP=0.0.0.0:389)
+conn=1007 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+""")
+
+
+def test_connection_ids_can_be_reused():
+    assert_equal(_parse_lines(LOG_REUSED_CONNECTION_ID), [
+        {'remote_addr': '127.0.0.1', 'uid': 'uz1', 'time': TIME},
+        {'remote_addr': '127.0.0.2', 'uid': 'uz2', 'time': TIME},
+    ])
+
+
 def test_parse_records_from_sql():
     import logparser
     Session = _create_memory_db(logparser.Model.metadata)
@@ -95,6 +111,8 @@ def test_state_is_saved_for_unclosed_connections():
     session = Session()
     _insert_log_records(session, LOG_CHUNKS_1)
     assert_equal(logparser.parse_sql(session), [])
+    assert_equal(session.query(logparser.LogParserState).count(), 1)
     _insert_log_records(session, LOG_CHUNKS_2)
     assert_equal(logparser.parse_sql(session),
                  [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])
+    assert_equal(session.query(logparser.LogParserState).count(), 0)
