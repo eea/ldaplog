@@ -20,6 +20,17 @@ class LogRecord(Model):
     message = sa.Column('Message', sa.Text)
 
 
+class LogRowAdapter(logging.LoggerAdapter):
+
+    def __init__(self, logger):
+        self.logger = logger
+        self.record_id = None
+
+    def process(self, msg, kwargs):
+        msg += ' (record.id=%r)' % self.record_id
+        return (msg, kwargs)
+
+
 class LogParser(object):
 
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
@@ -29,6 +40,7 @@ class LogParser(object):
     def __init__(self):
         self.connections = {}
         self.out = []
+        self.log = LogRowAdapter(log)
 
     def handle_record(self, time, message):
         connection_match = self.connection_pattern.search(message)
@@ -37,7 +49,7 @@ class LogParser(object):
         accept_match = self.accept_pattern.search(message)
         if accept_match:
             if connection_id in self.connections:
-                log.warn("Found ACCEPT for existing connection")
+                self.log.warning("Found ACCEPT for existing connection")
             self.connections[connection_id] = {
                 'remote_addr': accept_match.group('addr'),
             }
@@ -45,7 +57,7 @@ class LogParser(object):
 
         else:
             if connection_id not in self.connections:
-                log.warn("Found record for connection with no prior ACCEPT")
+                self.log.warning("Found record with no prior ACCEPT")
                 return
             conn = self.connections[connection_id]
 
@@ -66,6 +78,7 @@ def parse_sql(session):
     query = session.query(LogRecord)
 
     for record in query:
+        parser.log.record_id = record.id
         parser.handle_record(record.time, record.message)
         to_remove.append(record.id)
 
