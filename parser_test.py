@@ -13,6 +13,11 @@ def _create_memory_db(metadata):
     return sqlalchemy.orm.sessionmaker(bind=engine)
 
 
+def _parse_lines(lines):
+    from logparser import parse
+    return parse(lines)
+
+
 TIME = datetime(2013, 1, 27, 13, 34, 55)
 
 
@@ -27,8 +32,7 @@ conn=1007 fd=18 closed
 
 
 def test_parse_one_bind_operation():
-    from logparser import parse
-    assert_equal(parse(LOG_ONE_BIND),
+    assert_equal(_parse_lines(LOG_ONE_BIND),
                  [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])
 
 
@@ -41,8 +45,7 @@ conn=1008 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
 
 
 def test_parse_two_interleaved_binds():
-    from logparser import parse
-    assert_equal(parse(LOG_INTERLEAVED_BINDS), [
+    assert_equal(_parse_lines(LOG_INTERLEAVED_BINDS), [
         {'remote_addr': '127.0.0.1', 'uid': 'uz1', 'time': TIME},
         {'remote_addr': '127.0.0.2', 'uid': 'uz2', 'time': TIME},
     ])
