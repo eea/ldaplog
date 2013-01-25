@@ -62,3 +62,12 @@ def test_parse_records_from_sql():
         session.add(logparser.LogRecord(time=time, message=message))
     assert_equal(logparser.parse_sql(session),
                  [{'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME}])
+
+def test_consumed_records_are_removed_from_sql():
+    import logparser
+    Session = _create_memory_db(logparser.Model.metadata)
+    session = Session()
+    for time, message in LOG_ONE_BIND:
+        session.add(logparser.LogRecord(time=time, message=message))
+    logparser.parse_sql(session)
+    assert_equal(session.query(logparser.LogRecord).all(), [])

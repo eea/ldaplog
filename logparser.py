@@ -48,6 +48,14 @@ class LogParser(object):
 
 def parse_sql(session):
     parser = LogParser()
-    for record in session.query(LogRecord):
+    to_remove = []
+    query = session.query(LogRecord)
+
+    for record in query:
         parser.handle_record(record.time, record.message)
+        to_remove.append(record.id)
+
+    rows_to_remove = query.filter(LogRecord.id.in_(to_remove))
+    rows_to_remove.delete(synchronize_session=False)
+
     return parser.out
