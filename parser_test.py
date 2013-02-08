@@ -9,7 +9,8 @@ def assert_records_match(a, b):
 
 
 def _log_fixture(time, hostname, messages):
-    return [(time, hostname, msg) for msg in messages.strip().splitlines()]
+    return [(time, hostname, 'slapd[41]:', msg)
+            for msg in messages.strip().splitlines()]
 
 
 def _create_memory_db(metadata):
@@ -29,10 +30,11 @@ def _parse_lines(lines):
 
 def _insert_log_records(session, log_records):
     import logparser
-    for time, hostname, message in log_records:
+    for time, hostname, syslog_tag, message in log_records:
         kwargs = {
             'time': time,
             'hostname': hostname,
+            'syslog_tag': syslog_tag,
             'message': message,
         }
         session.add(logparser.LogRecord(**kwargs))

@@ -52,7 +52,7 @@ class LogParser(object):
         self.out = []
         self.log = LogRowAdapter(log)
 
-    def handle_record(self, time, hostname, message):
+    def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
         connection_id = int(connection_match.group('id'))
 
@@ -100,7 +100,8 @@ class LogParser(object):
 
         for record in session.query(LogRecord):
             self.log.record_id = record.id
-            self.handle_record(record.time, record.hostname, record.message)
+            self.handle_record(record.time, record.hostname,
+                               record.syslog_tag, record.message)
             to_remove.append(record.id)
 
         to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
