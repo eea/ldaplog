@@ -15,7 +15,7 @@ class LogRecord(Model):
 
     id = sa.Column('ID', sa.Integer, primary_key=True)
     time = sa.Column('ReceivedAt', sa.DateTime)
-    host = sa.Column('FromHost', sa.String)
+    hostname = sa.Column('FromHost', sa.String)
     syslog_tag = sa.Column('SysLogTag', sa.String)
     message = sa.Column('Message', sa.Text)
 
@@ -52,7 +52,7 @@ class LogParser(object):
         self.out = []
         self.log = LogRowAdapter(log)
 
-    def handle_record(self, time, message):
+    def handle_record(self, time, hostname, message):
         connection_match = self.connection_pattern.search(message)
         connection_id = int(connection_match.group('id'))
 
@@ -80,6 +80,7 @@ class LogParser(object):
         if bind_match:
             event = {
                 'time': time,
+                'hostname': hostname,
                 'remote_addr': conn['remote_addr'],
                 'uid': bind_match.group('uid'),
             }
@@ -99,7 +100,7 @@ class LogParser(object):
 
         for record in session.query(LogRecord):
             self.log.record_id = record.id
-            self.handle_record(record.time, record.message)
+            self.handle_record(record.time, record.hostname, record.message)
             to_remove.append(record.id)
 
         to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
