@@ -25,7 +25,7 @@ class LogParserState(Model):
     __tablename__ = 'ldapmon_state'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    connection_id = sa.Column(sa.Integer)
+    connkey = sa.Column(sa.String)
     remote_addr = sa.Column(sa.String)
 
 
@@ -54,26 +54,26 @@ class LogParser(object):
 
     def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
-        connection_id = int(connection_match.group('id'))
+        connkey = connection_match.group('id')
 
         accept_match = self.accept_pattern.search(message)
         if accept_match:
-            if connection_id in self.connections:
+            if connkey in self.connections:
                 self.log.warning("Found ACCEPT for existing connection")
-            self.connections[connection_id] = {
+            self.connections[connkey] = {
                 'remote_addr': accept_match.group('addr'),
             }
             return
 
         else:
-            if connection_id not in self.connections:
+            if connkey not in self.connections:
                 self.log.warning("Found record with no prior ACCEPT")
                 return
-            conn = self.connections[connection_id]
+            conn = self.connections[connkey]
 
         close_match = self.close_pattern.search(message)
         if close_match:
-            del self.connections[connection_id]
+            del self.connections[connkey]
             return
 
         bind_match = self.bind_pattern.search(message)
@@ -89,7 +89,7 @@ class LogParser(object):
 
     def parse_sql(self, session):
         for row in session.query(LogParserState):
-            self.connections[row.connection_id] = {
+            self.connections[row.connkey] = {
                 'remote_addr': row.remote_addr,
             }
         session.query(LogParserState).delete()
@@ -109,9 +109,9 @@ class LogParser(object):
 
         self.log.debug("Dumping existing connections: %r",
                        self.connections.keys())
-        session.add_all([LogParserState(connection_id=conn_id,
+        session.add_all([LogParserState(connkey=connkey,
                                         remote_addr=conn['remote_addr'])
-                         for conn_id, conn in self.connections.iteritems()])
+                         for connkey, conn in self.connections.iteritems()])
 
 
 _to_dict = lambda row: {c.name: getattr(row, c.name)
