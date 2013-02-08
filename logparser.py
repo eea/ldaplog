@@ -54,7 +54,11 @@ class LogParser(object):
 
     def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
-        connkey = connection_match.group('id')
+        connkey = ' '.join([
+            connection_match.group('id'),
+            hostname,
+            syslog_tag,
+        ])
 
         accept_match = self.accept_pattern.search(message)
         if accept_match:

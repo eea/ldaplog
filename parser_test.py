@@ -135,3 +135,40 @@ def test_state_is_saved_for_unclosed_connections():
         {'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME},
     ])
     assert_equal(session.query(logparser.LogParserState).count(), 0)
+
+
+HOST1 = 'ldap1'
+HOST2 = 'ldap2'
+PID41 = 'slapd[41]:'
+PID88 = 'slapd[88]:'
+IP1 = '10.0.0.1'
+IP2 = '10.0.0.2'
+IP3 = '10.0.0.3'
+
+LOG_MIXED_SOURCES = [
+    (TIME, HOST1, PID41, 'conn=1007 fd=18 ACCEPT from IP=' + IP1 +
+                         ':36676 (IP=0.0.0.0:389)'),
+    (TIME, HOST2, PID41, 'conn=1007 fd=18 ACCEPT from IP=' + IP2 +
+                         ':36676 (IP=0.0.0.0:389)'),
+    (TIME, HOST1, PID88, 'conn=1007 fd=18 ACCEPT from IP=' + IP3 +
+                         ':36676 (IP=0.0.0.0:389)'),
+
+    (TIME, HOST1, PID41, 'conn=1007 op=2 BIND dn="uid=uzer,ou=Users,'
+                         'o=EIONET,l=Europe" mech=SIMPLE ssf=0'),
+    (TIME, HOST2, PID41, 'conn=1007 op=2 BIND dn="uid=uzer,ou=Users,'
+                         'o=EIONET,l=Europe" mech=SIMPLE ssf=0'),
+    (TIME, HOST1, PID88, 'conn=1007 op=2 BIND dn="uid=uzer,ou=Users,'
+                         'o=EIONET,l=Europe" mech=SIMPLE ssf=0'),
+
+    (TIME, HOST1, PID41, 'conn=1007 op=2 RESULT tag=97 err=0 text='),
+    (TIME, HOST2, PID41, 'conn=1007 op=2 RESULT tag=97 err=0 text='),
+    (TIME, HOST1, PID88, 'conn=1007 op=2 RESULT tag=97 err=0 text='),
+]
+
+
+def test_discriminate_host_and_pid_with_same_connid():
+    assert_records_match(_parse_lines(LOG_MIXED_SOURCES), [
+        {'hostname': HOST1, 'remote_addr': IP1},
+        {'hostname': HOST2, 'remote_addr': IP2},
+        {'hostname': HOST1, 'remote_addr': IP3},
+    ])
