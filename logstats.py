@@ -32,9 +32,21 @@ class Person(Model):
             return person
 
 
+class Login(Model):
+
+    __tablename__ = 'login'
+    id = sa.Column(sa.Integer, primary_key=True)
+    time = sa.Column(sa.DateTime)
+    hostname = sa.Column(sa.String)
+    remote = sa.Column(sa.String)
+
+
 def update_stats(session, events):
     for e in events:
         Person.with_uid(e['uid'], session).last_login = e['time']
+        session.add(Login(time=e['time'],
+                          hostname=e['hostname'],
+                          remote=e['remote_addr']))
 
 
 def create_app():
