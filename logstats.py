@@ -17,13 +17,23 @@ class Person(Model):
 
     __tablename__ = 'person'
     id = sa.Column(sa.Integer, primary_key=True)
-    uid = sa.Column(sa.String)
+    uid = sa.Column(sa.String, unique=True)
     last_login = sa.Column(sa.DateTime)
+
+    @classmethod
+    def with_uid(cls, uid, session):
+        person = session.query(cls).filter_by(uid=uid).first()
+        if person:
+            return person
+        else:
+            person = Person(uid=uid)
+            session.add(person)
+            return person
 
 
 def update_stats(session, events):
     for e in events:
-        session.add(Person(uid=e['uid'], last_login=e['time']))
+        Person.with_uid(e['uid'], session).last_login = e['time']
 
 
 def create_app():
