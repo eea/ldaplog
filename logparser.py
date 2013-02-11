@@ -64,6 +64,9 @@ class LogParser(object):
 
     def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
+        if connection_match is None:
+            log.warn("Skipping unparsed message %r", message)
+            return
         connkey = ' '.join([
             connection_match.group('id'),
             hostname,
