@@ -1,10 +1,13 @@
+import os
 import re
 import logging
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 
+PARSER_DEBUG = (os.environ.get('PARSER_DEBUG') == 'on')
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG if PARSER_DEBUG else logging.INFO)
 
 Model = declarative_base()
 
