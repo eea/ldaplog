@@ -49,9 +49,17 @@ def create_app():
     return app
 
 
+def _create_log_database_session_cls():
+    LOG_DATABASE = os.environ['LOG_DATABASE']
+    engine = sqlalchemy.create_engine(LOG_DATABASE)
+    return sqlalchemy.orm.sessionmaker(bind=engine)
+
+
 def main():
     import flask
     from flask.ext.script import Manager
+
+    LogSession = _create_log_database_session_cls()
 
     manager = Manager(create_app)
 
@@ -65,11 +73,7 @@ def main():
     @fixture.option('-p', '--per-page', dest='per_page', type=int)
     def dump(per_page=1000):
         import logparser
-        LOG_DATABASE = os.environ['LOG_DATABASE']
-        app = flask.current_app
-        engine = sqlalchemy.create_engine(LOG_DATABASE)
-        Session = sqlalchemy.orm.sessionmaker(bind=engine)
-        session = Session()
+        session = LogSession()
         out = sys.stdout
         records = session.query(logparser.LogRecord)
         n = records.count()
