@@ -1,1 +1,1 @@
-web: python logstats.py runserver
+web: ./manage.py runserver
