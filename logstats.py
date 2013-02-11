@@ -6,9 +6,10 @@ import sqlalchemy.orm
 from sqlalchemy.ext.declarative import declarative_base
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
+LOGSTATS_DEBUG =  (os.environ.get('LOGSTATS_DEBUG') == 'on')
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG if DEBUG else logging.INFO)
+log.setLevel(logging.DEBUG if LOGSTATS_DEBUG else logging.INFO)
 
 Model = declarative_base()
 
