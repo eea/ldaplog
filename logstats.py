@@ -109,7 +109,7 @@ def main():
     def dump(per_page=1000):
         log_session = LogSession()
         out = sys.stdout
-        records = log_session.query(logparser.LogRecord)
+        records = log_session.query(logparser.LogRecord).order_by('id')
         n = records.count()
         log.debug("Dumping %d records (%d per page)", n, per_page)
         for offset in range(0, n, per_page):

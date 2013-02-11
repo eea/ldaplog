@@ -115,7 +115,7 @@ class LogParser(object):
 
         to_remove = []
 
-        for record in session.query(LogRecord):
+        for record in session.query(LogRecord).order_by('id'):
             self.log.record_id = record.id
             self.handle_record(record.time, record.hostname,
                                record.syslog_tag, record.message.strip())
