@@ -1,5 +1,6 @@
 from datetime import datetime
 from nose.tools import assert_equal, assert_dict_contains_subset
+from testing_utils import create_memory_db
 
 
 def assert_records_match(a, b):
@@ -11,13 +12,6 @@ def assert_records_match(a, b):
 def _log_fixture(time, hostname, messages):
     return [(time, hostname, 'slapd[41]:', msg)
             for msg in messages.strip().splitlines()]
-
-
-def _create_memory_db(metadata):
-    import sqlalchemy, sqlalchemy.orm
-    engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
-    metadata.create_all(engine)
-    return sqlalchemy.orm.sessionmaker(bind=engine)
 
 
 def _parse_lines(lines):
@@ -95,7 +89,7 @@ def test_connection_ids_can_be_reused():
 
 def test_parse_records_from_sql():
     import logparser
-    Session = _create_memory_db(logparser.Model.metadata)
+    Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_ONE_BIND)
     assert_records_match(logparser.parse_sql(session), [
@@ -104,7 +98,7 @@ def test_parse_records_from_sql():
 
 def test_consumed_records_are_removed_from_sql():
     import logparser
-    Session = _create_memory_db(logparser.Model.metadata)
+    Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_ONE_BIND)
     logparser.parse_sql(session)
@@ -125,7 +119,7 @@ conn=1007 fd=18 closed
 
 def test_state_is_saved_for_unclosed_connections():
     import logparser
-    Session = _create_memory_db(logparser.Model.metadata)
+    Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_CHUNKS_1)
     assert_records_match(logparser.parse_sql(session), [])

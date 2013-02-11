@@ -1,10 +1,13 @@
+import os
 import re
 import logging
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 
+PARSER_DEBUG = (os.environ.get('PARSER_DEBUG') == 'on')
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG if PARSER_DEBUG else logging.INFO)
 
 Model = declarative_base()
 
@@ -40,6 +43,13 @@ class LogRowAdapter(logging.LoggerAdapter):
         return (msg, kwargs)
 
 
+def delete_many(session, model, id_list, per_page=100):
+    for offset in range(0, len(id_list), per_page):
+        page = id_list[offset:offset + per_page]
+        remove_query = session.query(model).filter(model.id.in_(page))
+        remove_query.delete(synchronize_session=False)
+
+
 class LogParser(object):
 
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
@@ -54,6 +64,9 @@ class LogParser(object):
 
     def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
+        if connection_match is None:
+            log.warn("Skipping unparsed message %r", message)
+            return
         connkey = ' '.join([
             connection_match.group('id'),
             hostname,
@@ -102,14 +115,13 @@ class LogParser(object):
 
         to_remove = []
 
-        for record in session.query(LogRecord):
+        for record in session.query(LogRecord).order_by('id'):
             self.log.record_id = record.id
             self.handle_record(record.time, record.hostname,
-                               record.syslog_tag, record.message)
+                               record.syslog_tag, record.message.strip())
             to_remove.append(record.id)
 
-        to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
-        to_remove.delete(synchronize_session=False)
+        delete_many(session, LogRecord, to_remove)
 
         self.log.debug("Dumping existing connections: %r",
                        self.connections.keys())
