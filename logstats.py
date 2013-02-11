@@ -60,6 +60,31 @@ def main():
         engine = flask.current_app.extensions['db_engine']
         Model.metadata.create_all(engine)
 
+    fixture = Manager()
+
+    @fixture.option('-p', '--per-page', dest='per_page', type=int)
+    def dump(per_page=1000):
+        import logparser
+        LOG_DATABASE = os.environ['LOG_DATABASE']
+        app = flask.current_app
+        engine = sqlalchemy.create_engine(LOG_DATABASE)
+        Session = sqlalchemy.orm.sessionmaker(bind=engine)
+        session = Session()
+        out = sys.stdout
+        records = session.query(logparser.LogRecord)
+        n = records.count()
+        log.debug("Dumping %d records (%d per page)", n, per_page)
+        for offset in range(0, n, per_page):
+            records_page = records.offset(offset).limit(per_page)
+            log.debug("Offset %d ...", offset)
+            for record in records_page:
+                row = {k: unicode(getattr(record, k)) for k in
+                       ['id', 'time', 'hostname', 'syslog_tag', 'message']}
+                flask.json.dump(row, out, sort_keys=True)
+                out.write('\n')
+        log.debug("Dump complete")
+
+    manager.add_command('fixture', fixture)
     manager.run()
 
 
