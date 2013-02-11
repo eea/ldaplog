@@ -88,6 +88,27 @@ def main():
                 out.write('\n')
         log.debug("Dump complete")
 
+    @fixture.option('-o', '--offset', dest='offset', default=0, type=int)
+    @fixture.option('-l', '--limit', dest='limit', type=int)
+    def load(offset=0, limit=None):
+        import times
+        infile = iter(sys.stdin)
+        session = LogSession()
+        for c in range(offset):
+            next(infile)
+        n = 0
+        for row_json in infile:
+            row = flask.json.loads(row_json)
+            del row['id']
+            row['time'] = times.to_universal(row['time'], 'UTC')
+            record = logparser.LogRecord(**row)
+            session.add(record)
+            n += 1
+            if n == limit:
+                break
+        session.commit()
+        log.debug("Loaded %d rows into database", n)
+
     manager.add_command('fixture', fixture)
     manager.run()
 

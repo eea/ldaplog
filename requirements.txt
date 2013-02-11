@@ -10,3 +10,7 @@ Flask==0.9
 Jinja2==2.6
 Werkzeug==0.8.3
 Flask-Script==0.5.3
+python-dateutil==2.1
+pytz==2012j
+six==1.2.0
+times==0.6.1
