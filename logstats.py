@@ -117,7 +117,11 @@ def main():
         infile = iter(sys.stdin)
         log_session = LogSession()
         for c in range(offset):
-            next(infile)
+            try:
+                next(infile)
+            except StopIteration:
+                log.info("End of file")
+                return
         n = 0
         for row_json in infile:
             row = flask.json.loads(row_json)
@@ -129,7 +133,7 @@ def main():
             if n == limit:
                 break
         log_session.commit()
-        log.debug("Loaded %d rows into database", n)
+        log.info("Loaded %d rows into database", n)
 
     manager.add_command('fixture', fixture)
     manager.run()
