@@ -1,8 +1,14 @@
 import os
 import sys
+import logging
 import sqlalchemy as sa
 import sqlalchemy.orm
 from sqlalchemy.ext.declarative import declarative_base
+
+DEBUG = (os.environ.get('DEBUG') == 'on')
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 
 Model = declarative_base()
 
@@ -23,7 +29,6 @@ def update_stats(session, events):
 def create_app():
     import flask
 
-    DEBUG = (os.environ.get('DEBUG') == 'on')
     DATABASE = os.environ['DATABASE']
 
     app = flask.Flask(__name__)
@@ -59,4 +64,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig()
     main()
