@@ -73,9 +73,9 @@ def main():
 
     @fixture.option('-p', '--per-page', dest='per_page', type=int)
     def dump(per_page=1000):
-        session = LogSession()
+        log_session = LogSession()
         out = sys.stdout
-        records = session.query(logparser.LogRecord)
+        records = log_session.query(logparser.LogRecord)
         n = records.count()
         log.debug("Dumping %d records (%d per page)", n, per_page)
         for offset in range(0, n, per_page):
@@ -93,7 +93,7 @@ def main():
     def load(offset=0, limit=None):
         import times
         infile = iter(sys.stdin)
-        session = LogSession()
+        log_session = LogSession()
         for c in range(offset):
             next(infile)
         n = 0
@@ -102,11 +102,11 @@ def main():
             del row['id']
             row['time'] = times.to_universal(row['time'], 'UTC')
             record = logparser.LogRecord(**row)
-            session.add(record)
+            log_session.add(record)
             n += 1
             if n == limit:
                 break
-        session.commit()
+        log_session.commit()
         log.debug("Loaded %d rows into database", n)
 
     manager.add_command('fixture', fixture)
