@@ -44,7 +44,7 @@ def create_app():
 
     app = flask.Flask(__name__)
     app.debug = DEBUG
-    engine = sqlalchemy.create_engine(DATABASE, echo=DEBUG)
+    engine = sqlalchemy.create_engine(DATABASE)
     app.extensions['db_engine'] = engine
     Session = sqlalchemy.orm.sessionmaker(bind=engine)
 
