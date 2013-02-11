@@ -53,7 +53,7 @@ def create_app():
         session = Session()
         persons = session.query(Person).all()
         return flask.jsonify({
-            'person': [{'uid': p.uid, 'last_login': p.last_login}
+            'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
                        for p in persons],
         })
 
