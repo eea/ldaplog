@@ -69,6 +69,17 @@ def main():
         Model.metadata.create_all(flask.current_app.extensions['db_engine'])
         logparser.Model.metadata.create_all(LogSession().bind)
 
+    @manager.command
+    def update():
+        app = flask.current_app
+        Session = sqlalchemy.orm.sessionmaker(bind=app.extensions['db_engine'])
+        session = Session()
+        log_session = LogSession()
+        events = logparser.parse_sql(log_session)
+        update_stats(session, events)
+        session.commit()
+        log_session.commit()
+
     fixture = Manager()
 
     @fixture.option('-p', '--per-page', dest='per_page', type=int)
