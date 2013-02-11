@@ -1,4 +1,7 @@
+import os
+import sys
 import sqlalchemy as sa
+import sqlalchemy.orm
 from sqlalchemy.ext.declarative import declarative_base
 
 Model = declarative_base()
@@ -15,3 +18,45 @@ class Person(Model):
 def update_stats(session, events):
     for e in events:
         session.add(Person(uid=e['uid'], last_login=e['time']))
+
+
+def create_app():
+    import flask
+
+    DEBUG = (os.environ.get('DEBUG') == 'on')
+    DATABASE = os.environ['DATABASE']
+
+    app = flask.Flask(__name__)
+    app.debug = DEBUG
+    engine = sqlalchemy.create_engine(DATABASE, echo=DEBUG)
+    app.extensions['db_engine'] = engine
+    Session = sqlalchemy.orm.sessionmaker(bind=engine)
+
+    @app.route('/')
+    def home():
+        session = Session()
+        persons = session.query(Person).all()
+        return flask.jsonify({
+            'person': [{'uid': p.uid, 'last_login': p.last_login}
+                       for p in persons],
+        })
+
+    return app
+
+
+def main():
+    import flask
+    from flask.ext.script import Manager
+
+    manager = Manager(create_app)
+
+    @manager.command
+    def syncdb():
+        engine = flask.current_app.extensions['db_engine']
+        Model.metadata.create_all(engine)
+
+    manager.run()
+
+
+if __name__ == '__main__':
+    main()
