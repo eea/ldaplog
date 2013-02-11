@@ -58,6 +58,7 @@ def _create_log_database_session_cls():
 def main():
     import flask
     from flask.ext.script import Manager
+    import logparser
 
     LogSession = _create_log_database_session_cls()
 
@@ -65,14 +66,13 @@ def main():
 
     @manager.command
     def syncdb():
-        engine = flask.current_app.extensions['db_engine']
-        Model.metadata.create_all(engine)
+        Model.metadata.create_all(flask.current_app.extensions['db_engine'])
+        logparser.Model.metadata.create_all(LogSession().bind)
 
     fixture = Manager()
 
     @fixture.option('-p', '--per-page', dest='per_page', type=int)
     def dump(per_page=1000):
-        import logparser
         session = LogSession()
         out = sys.stdout
         records = session.query(logparser.LogRecord)
