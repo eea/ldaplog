@@ -43,6 +43,13 @@ class LogRowAdapter(logging.LoggerAdapter):
         return (msg, kwargs)
 
 
+def delete_many(session, model, id_list, per_page=100):
+    for offset in range(0, len(id_list), per_page):
+        page = id_list[offset:offset + per_page]
+        remove_query = session.query(model).filter(model.id.in_(page))
+        remove_query.delete(synchronize_session=False)
+
+
 class LogParser(object):
 
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
@@ -111,8 +118,7 @@ class LogParser(object):
                                record.syslog_tag, record.message)
             to_remove.append(record.id)
 
-        to_remove = session.query(LogRecord).filter(LogRecord.id.in_(to_remove))
-        to_remove.delete(synchronize_session=False)
+        delete_many(session, LogRecord, to_remove)
 
         self.log.debug("Dumping existing connections: %r",
                        self.connections.keys())
