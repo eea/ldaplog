@@ -144,6 +144,8 @@ def main():
             n += 1
             if n == limit:
                 break
+            if n % 100 == 0:
+                log_session.flush()
         log_session.commit()
         log.info("Loaded %d rows into database", n)
 
