@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import logging
-import ldaplog.app
+from ldaplog.app import manager
 
 
 if __name__ == '__main__':
     logging.basicConfig()
-    ldaplog.app.main()
+    manager.run()
