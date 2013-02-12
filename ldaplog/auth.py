@@ -34,7 +34,8 @@ def login():
         if authenticate(username, password):
             flask.session['username'] = username
             flask.flash("Logged in as %s" % username, 'success')
-            return flask.redirect(flask.url_for(LOGIN_DEFAULT_VIEW))
+            url = request.args.get('next') or flask.url_for(LOGIN_DEFAULT_VIEW)
+            return flask.redirect(url)
 
         else:
             flask.flash("Bad username or password", 'error')
@@ -45,4 +46,5 @@ def login():
 def require_login():
     """ Make sure someone is logged in. Useful with `before_request` hook. """
     if flask.g.username is None:
-        return flask.redirect(flask.url_for('auth.login'))
+        url = flask.url_for('auth.login', next=flask.request.url)
+        return flask.redirect(url)
