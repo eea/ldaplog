@@ -57,6 +57,15 @@ class LogParser(object):
     bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* ')
     close_pattern = re.compile(r' closed$')
     result_pattern = re.compile(r' RESULT tag=97 err=(?P<err>\d+) ')
+    skip_patterns = [
+        re.compile(r'^daemon: shutdown requested and initiated\.$'),
+        re.compile(r'^slapd shutdown: waiting'),
+        re.compile(r'^slapd stopped.$'),
+        re.compile(r'^slapd starting$'),
+        re.compile(r'^@\(\#\) \$OpenLDAP: slapd \d+.\d+.\d+ '),
+        re.compile(r'^bdb_monitor_db_open: monitoring disabled'),
+        re.compile(r'bdb_substring_candidates.* not indexed'),
+    ]
 
     def __init__(self):
         self.connections = {}
@@ -66,7 +75,8 @@ class LogParser(object):
     def handle_record(self, time, hostname, syslog_tag, message):
         connection_match = self.connection_pattern.search(message)
         if connection_match is None:
-            log.warn("Skipping unparsed message %r", message)
+            if not any(p.search(message) for p in self.skip_patterns):
+                log.warn("Skipping unparsed message %r", message)
             return
         connkey = ' '.join([
             connection_match.group('id'),
