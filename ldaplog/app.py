@@ -58,15 +58,9 @@ def register_admin(app):
     admin.add_view(_admin_log_record)
 
 
-def create_app(debug=False):
+def create_app(config=None):
     app = flask.Flask(__name__)
-    app.debug = debug
-    app.config['DATABASE'] = os.environ.get('DATABASE')
-    app.config['LOG_DATABASE'] = os.environ.get('LOG_DATABASE')
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-    app.config['AUTH_LDAP_TIMEOUT'] = 10
-    app.config['AUTH_LDAP_SERVER'] = os.environ.get('AUTH_LDAP_SERVER')
-    app.config['AUTH_LDAP_DN'] = os.environ.get('AUTH_LDAP_DN')
+    app.config.update(config or {})
     app.extensions['db'] = Database(app)
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)
@@ -74,10 +68,19 @@ def create_app(debug=False):
     return app
 
 
-manager = Manager(create_app)
+def config_from_environ():
+    return {
+        'DEBUG': (os.environ.get('DEBUG') == 'on'),
+        'DATABASE': os.environ.get('DATABASE'),
+        'LOG_DATABASE': os.environ.get('LOG_DATABASE'),
+        'SECRET_KEY': os.environ.get('SECRET_KEY'),
+        'AUTH_LDAP_TIMEOUT': 10,
+        'AUTH_LDAP_SERVER': os.environ.get('AUTH_LDAP_SERVER'),
+        'AUTH_LDAP_DN': os.environ.get('AUTH_LDAP_DN'),
+    }
 
-manager.add_option("-d", "--debug", dest="debug", type=bool,
-                   default=(os.environ.get('DEBUG') == 'on'))
+
+manager = Manager(lambda: create_app(config_from_environ()))
 
 manager.add_command('fixture', fixtures.fixture)
 
