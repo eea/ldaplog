@@ -23,24 +23,30 @@ class Database(object):
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
 
 
+def register_admin(app):
+    from flask.ext.admin import Admin
+    from flask.ext.admin.contrib.sqlamodel import ModelView
+
+    admin = Admin(app)
+    db = app.extensions['db']
+    _admin_session = db.StatSession()  # TODO should not be global
+    admin.add_view(ModelView(stats.Person, _admin_session))
+
+    class LogRecordView(ModelView):
+        column_searchable_list = ('message',)
+        page_size = 10
+
+    _admin_log_session = db.LogSession()  # TODO should not be global
+    _admin_log_record = LogRecordView(logparser.LogRecord, _admin_log_session)
+    admin.add_view(_admin_log_record)
+
+
 def create_app(debug=False):
     app = flask.Flask(__name__)
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     db = app.extensions['db'] = Database(app)
-
-    from flask.ext.admin import Admin
-    from flask.ext.admin.contrib.sqlamodel import ModelView
-    admin = Admin(app)
-    _admin_session = db.StatSession()  # TODO should not be global
-    admin.add_view(ModelView(stats.Person, _admin_session))
-    _admin_log_session = db.LogSession()  # TODO should not be glo
-    import logparser
-    class LogRecordView(ModelView):
-        column_searchable_list = ('message',)
-        page_size = 10
-    _admin_log_record = LogRecordView(logparser.LogRecord, _admin_log_session)
-    admin.add_view(_admin_log_record)
+    register_admin(app)
 
     @app.route('/')
     def home():
