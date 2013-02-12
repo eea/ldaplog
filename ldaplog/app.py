@@ -62,6 +62,9 @@ def create_app(debug=False):
     app = flask.Flask(__name__)
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    app.config['AUTH_LDAP_TIMEOUT'] = 10
+    app.config['AUTH_LDAP_SERVER'] = os.environ.get('AUTH_LDAP_SERVER')
+    app.config['AUTH_LDAP_DN'] = os.environ.get('AUTH_LDAP_DN')
     app.extensions['db'] = Database(app)
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)
