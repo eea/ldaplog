@@ -1,7 +1,6 @@
 import os
 import logging
 import sqlalchemy.orm
-from werkzeug.local import LocalProxy
 import flask
 from flask.ext.script import Manager
 from . import logparser
@@ -60,9 +59,6 @@ def create_app(debug=False):
     return app
 
 
-db = LocalProxy(lambda: flask.current_app.extensions['db'])
-
-
 manager = Manager(create_app)
 
 manager.add_option("-d", "--debug", dest="debug", type=bool,
@@ -73,12 +69,14 @@ manager.add_command('fixture', fixtures.fixture)
 
 @manager.command
 def syncdb():
+    db = flask.current_app.extensions['db']
     stats.Model.metadata.create_all(db.stat_engine)
     logparser.Model.metadata.create_all(db.log_engine)
 
 
 @manager.command
 def update():
+    db = flask.current_app.extensions['db']
     stat_session = db.StatSession()
     log_session = db.LogSession()
     events = logparser.parse_sql(log_session)

@@ -1,4 +1,3 @@
-from werkzeug.local import LocalProxy
 import sys
 import logging
 import flask
@@ -8,13 +7,12 @@ from . import logparser
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-db = LocalProxy(lambda: flask.current_app.extensions['db'])
 fixture = Manager()
 
 
 @fixture.option('-p', '--per-page', dest='per_page', type=int)
 def dump(per_page=1000):
-    log_session = db.LogSession()
+    log_session = flask.current_app.extensions['db'].LogSession()
     out = sys.stdout
     records = log_session.query(logparser.LogRecord).order_by('id')
     n = records.count()
@@ -35,7 +33,7 @@ def dump(per_page=1000):
 def load(offset=0, limit=None):
     import times
     infile = iter(sys.stdin)
-    log_session = db.LogSession()
+    log_session = flask.current_app.extensions['db'].LogSession()
     for c in range(offset):
         try:
             next(infile)
