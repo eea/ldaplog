@@ -17,9 +17,23 @@ def create_app(debug=False):
 
     app = flask.Flask(__name__)
     app.debug = debug
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     engine = sqlalchemy.create_engine(DATABASE)
     app.extensions['db_engine'] = engine
     Session = sqlalchemy.orm.sessionmaker(bind=engine)
+
+    from flask.ext.admin import Admin
+    from flask.ext.admin.contrib.sqlamodel import ModelView
+    admin = Admin(app)
+    _admin_session = Session()  # TODO should not be global
+    admin.add_view(ModelView(stats.Person, _admin_session))
+    _admin_log_session = _create_log_database_session_cls()()  # TODO should not be glo
+    import logparser
+    class LogRecordView(ModelView):
+        column_searchable_list = ('message',)
+        page_size = 10
+    _admin_log_record = LogRecordView(logparser.LogRecord, _admin_log_session)
+    admin.add_view(_admin_log_record)
 
     @app.route('/')
     def home():
