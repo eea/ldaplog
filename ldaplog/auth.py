@@ -33,6 +33,10 @@ def login():
 
         if authenticate(username, password):
             flask.session['username'] = username
+            flask.flash("Logged in as %s" % username, 'success')
             return flask.redirect(flask.url_for(LOGIN_DEFAULT_VIEW))
+
+        else:
+            flask.flash("Bad username or password", 'error')
 
     return flask.render_template('login.html')
