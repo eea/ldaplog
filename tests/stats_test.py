@@ -87,3 +87,25 @@ def test_log_bind_attempts_for_each_server():
         (t1, 'ldap3', '10.0.0.3'),
         (t2, 'ldap2', '10.0.0.4'),
     ])
+
+
+def test_log_bind_success_status():
+    from ldaplog import stats
+    session = _create_session()
+    stats.update_stats(session, [
+        {'uid': 'uzer',
+         'time': TIME,
+         'success': True,
+         'hostname': 'ldap1',
+         'remote_addr': '10.0.0.2'},
+        {'uid': 'uzer',
+         'time': TIME,
+         'success': False,
+         'hostname': 'ldap2',
+         'remote_addr': '10.0.0.2'},
+    ])
+    logins = session.query(stats.Login).all()
+    assert_equal([(b.hostname, b.success) for b in logins], [
+        ('ldap1', True),
+        ('ldap2', False),
+    ])
