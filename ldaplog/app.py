@@ -35,12 +35,7 @@ def crashme():
 
 @views.route('/')
 def home():
-    session = db.StatSession()
-    persons = session.query(stats.Person).all()
-    return flask.jsonify({
-        'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
-                   for p in persons],
-    })
+    return flask.redirect(flask.url_for('admin.index'))
 
 
 def register_admin(app):
