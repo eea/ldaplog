@@ -1,6 +1,7 @@
 import os
 import logging
 import sqlalchemy.orm
+from werkzeug.local import LocalProxy
 import flask
 from flask.ext.script import Manager
 from . import logparser
@@ -20,6 +21,21 @@ class Database(object):
 
         self.log_engine = sqlalchemy.create_engine(os.environ['LOG_DATABASE'])
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
+
+
+db = LocalProxy(lambda: flask.current_app.extensions['db'])
+
+views = flask.Blueprint('views', __name__)
+
+
+@views.route('/_crashme')
+def crashme():
+    raise RuntimeError("Crashing, as requested")
+
+
+@views.route('/')
+def home():
+    return flask.redirect(flask.url_for('admin.index'))
 
 
 def register_admin(app):
@@ -45,18 +61,9 @@ def create_app(debug=False):
     app = flask.Flask(__name__)
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-    db = app.extensions['db'] = Database(app)
+    app.extensions['db'] = Database(app)
+    app.register_blueprint(views)
     register_admin(app)
-
-    @app.route('/')
-    def home():
-        session = db.StatSession()
-        persons = session.query(stats.Person).all()
-        return flask.jsonify({
-            'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
-                       for p in persons],
-        })
-
     return app
 
 
@@ -70,14 +77,12 @@ manager.add_command('fixture', fixtures.fixture)
 
 @manager.command
 def syncdb():
-    db = flask.current_app.extensions['db']
     stats.Model.metadata.create_all(db.stat_engine)
     logparser.Model.metadata.create_all(db.log_engine)
 
 
 @manager.command
 def update():
-    db = flask.current_app.extensions['db']
     stat_session = db.StatSession()
     log_session = db.LogSession()
     events = logparser.parse_sql(log_session)
