@@ -5,8 +5,8 @@ import sys
 import logging
 import flask
 from flask.ext.script import Manager
-import logparser
-import logstats
+from ldaplog import logparser
+from ldaplog import stats
 import sqlalchemy.orm
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
@@ -27,7 +27,7 @@ def create_app():
     @app.route('/')
     def home():
         session = Session()
-        persons = session.query(logstats.Person).all()
+        persons = session.query(stats.Person).all()
         return flask.jsonify({
             'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
                        for p in persons],
@@ -50,7 +50,7 @@ def main():
     @manager.command
     def syncdb():
         engine = flask.current_app.extensions['db_engine']
-        logstats.Model.metadata.create_all(engine)
+        stats.Model.metadata.create_all(engine)
         logparser.Model.metadata.create_all(LogSession().bind)
 
     @manager.command
@@ -60,7 +60,7 @@ def main():
         session = Session()
         log_session = LogSession()
         events = logparser.parse_sql(log_session)
-        logstats.update_stats(session, events)
+        stats.update_stats(session, events)
         session.commit()
         log_session.commit()
 
