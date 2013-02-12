@@ -52,6 +52,7 @@ def test_parse_one_bind_operation():
         {'hostname': 'ldap2',
          'remote_addr': '127.0.0.1',
          'uid': 'uzer',
+         'success': True,
          'time': TIME},
     ])
 
@@ -187,5 +188,25 @@ def test_parse_ipv6_connection():
         {'hostname': 'ldap2',
          'remote_addr': '[::1]',
          'uid': 'uzer',
+         'time': TIME},
+    ])
+
+
+LOG_FAILED_BIND = _log_fixture(TIME, 'ldap2', """
+conn=1007 fd=18 ACCEPT from IP=[::1]:42737 (IP=[::]:389)
+conn=1007 op=2 BIND dn="uid=uzer,ou=users,o=eionet,l=europe" method=128
+conn=1007 op=2 BIND dn="uid=uzer,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=49 text=
+conn=1007 op=3 UNBIND
+conn=1007 fd=18 closed
+""")
+
+
+def test_flag_failed_bind():
+    assert_records_match(_parse_lines(LOG_FAILED_BIND), [
+        {'hostname': 'ldap2',
+         'remote_addr': '[::1]',
+         'uid': 'uzer',
+         'success': False,
          'time': TIME},
     ])

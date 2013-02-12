@@ -56,7 +56,7 @@ class LogParser(object):
     accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>.+):\d+ ')
     bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* ')
     close_pattern = re.compile(r' closed$')
-    result_pattern = re.compile(r' RESULT tag=97 err=0 ')
+    result_pattern = re.compile(r' RESULT tag=97 err=(?P<err>\d+) ')
 
     def __init__(self):
         self.connections = {}
@@ -107,6 +107,7 @@ class LogParser(object):
         bind_event = conn.pop('bind', None)
         result_match = self.result_pattern.search(message)
         if result_match and bind_event is not None:
+            bind_event['success'] = (result_match.group('err') == '0')
             self.out.append(bind_event)
             return
 
