@@ -1,6 +1,6 @@
 from datetime import datetime
 from nose.tools import assert_equal, assert_dict_contains_subset
-from testing_utils import create_memory_db
+from utils import create_memory_db
 
 
 def assert_records_match(a, b):
@@ -15,7 +15,7 @@ def _log_fixture(time, hostname, messages):
 
 
 def _parse_lines(lines):
-    import logparser
+    from ldaplog import logparser
     parser = logparser.LogParser()
     for l in lines:
         parser.handle_record(*l)
@@ -23,7 +23,7 @@ def _parse_lines(lines):
 
 
 def _insert_log_records(session, log_records):
-    import logparser
+    from ldaplog import logparser
     for time, hostname, syslog_tag, message in log_records:
         kwargs = {
             'time': time,
@@ -88,7 +88,7 @@ def test_connection_ids_can_be_reused():
 
 
 def test_parse_records_from_sql():
-    import logparser
+    from ldaplog import logparser
     Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_ONE_BIND)
@@ -97,7 +97,7 @@ def test_parse_records_from_sql():
     ])
 
 def test_consumed_records_are_removed_from_sql():
-    import logparser
+    from ldaplog import logparser
     Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_ONE_BIND)
@@ -118,7 +118,7 @@ conn=1007 fd=18 closed
 """)
 
 def test_state_is_saved_for_unclosed_connections():
-    import logparser
+    from ldaplog import logparser
     Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_CHUNKS_1)
