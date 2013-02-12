@@ -25,6 +25,18 @@ class Database(object):
 
 db = LocalProxy(lambda: flask.current_app.extensions['db'])
 
+views = flask.Blueprint('views', __name__)
+
+
+@views.route('/')
+def home():
+    session = db.StatSession()
+    persons = session.query(stats.Person).all()
+    return flask.jsonify({
+        'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
+                   for p in persons],
+    })
+
 
 def register_admin(app):
     from flask.ext.admin import Admin
@@ -50,17 +62,8 @@ def create_app(debug=False):
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     app.extensions['db'] = Database(app)
+    app.register_blueprint(views)
     register_admin(app)
-
-    @app.route('/')
-    def home():
-        session = db.StatSession()
-        persons = session.query(stats.Person).all()
-        return flask.jsonify({
-            'person': [{'uid': p.uid, 'last_login': unicode(p.last_login)}
-                       for p in persons],
-        })
-
     return app
 
 
