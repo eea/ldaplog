@@ -40,7 +40,8 @@ class Login(Model):
 
 def update_stats(session, events):
     for e in events:
-        Person.with_uid(e['uid'], session).last_login = e['time']
+        if e['success']:
+            Person.with_uid(e['uid'], session).last_login = e['time']
         session.add(Login(time=e['time'],
                           hostname=e['hostname'],
                           remote=e['remote_addr']))
