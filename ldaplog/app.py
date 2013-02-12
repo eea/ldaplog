@@ -7,6 +7,7 @@ from flask.ext.script import Manager
 from . import logparser
 from . import stats
 from . import fixtures
+from . import auth
 
 
 log = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ def create_app(debug=False):
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     app.extensions['db'] = Database(app)
     app.register_blueprint(views)
+    app.register_blueprint(auth.auth)
     register_admin(app)
     return app
 
