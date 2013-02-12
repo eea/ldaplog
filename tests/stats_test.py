@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from nose.tools import assert_equal
-from testing_utils import create_memory_db
+from utils import create_memory_db
 
 
 TIME = datetime(2013, 1, 27, 13, 34, 55)

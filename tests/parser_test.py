@@ -1,6 +1,6 @@
 from datetime import datetime
 from nose.tools import assert_equal, assert_dict_contains_subset
-from testing_utils import create_memory_db
+from utils import create_memory_db
 
 
 def assert_records_match(a, b):
