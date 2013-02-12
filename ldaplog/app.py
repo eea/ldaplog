@@ -17,10 +17,10 @@ log.setLevel(logging.INFO)
 class Database(object):
 
     def __init__(self, app):
-        self.stat_engine = sqlalchemy.create_engine(os.environ['DATABASE'])
+        self.stat_engine = sqlalchemy.create_engine(app.config['DATABASE'])
         self.StatSession = sqlalchemy.orm.sessionmaker(bind=self.stat_engine)
 
-        self.log_engine = sqlalchemy.create_engine(os.environ['LOG_DATABASE'])
+        self.log_engine = sqlalchemy.create_engine(app.config['LOG_DATABASE'])
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
 
 
@@ -61,6 +61,8 @@ def register_admin(app):
 def create_app(debug=False):
     app = flask.Flask(__name__)
     app.debug = debug
+    app.config['DATABASE'] = os.environ.get('DATABASE')
+    app.config['LOG_DATABASE'] = os.environ.get('LOG_DATABASE')
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
     app.config['AUTH_LDAP_TIMEOUT'] = 10
     app.config['AUTH_LDAP_SERVER'] = os.environ.get('AUTH_LDAP_SERVER')
