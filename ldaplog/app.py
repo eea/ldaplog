@@ -57,6 +57,10 @@ def register_admin(app):
     _admin_log_record = LogRecordView(logparser.LogRecord, _admin_log_session)
     admin.add_view(_admin_log_record)
 
+    for view in admin._views:
+        (app.before_request_funcs.setdefault(view.blueprint.name, [])
+                .append(auth.require_login))
+
 
 def create_app(config=None):
     app = flask.Flask(__name__)

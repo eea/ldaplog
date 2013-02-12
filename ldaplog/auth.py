@@ -40,3 +40,9 @@ def login():
             flask.flash("Bad username or password", 'error')
 
     return flask.render_template('login.html')
+
+
+def require_login():
+    """ Make sure someone is logged in. Useful with `before_request` hook. """
+    if flask.g.username is None:
+        return flask.redirect(flask.url_for('auth.login'))
