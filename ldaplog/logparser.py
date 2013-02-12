@@ -76,7 +76,7 @@ class LogParser(object):
         connection_match = self.connection_pattern.search(message)
         if connection_match is None:
             if not any(p.search(message) for p in self.skip_patterns):
-                log.warn("Skipping unparsed message %r", message)
+                self.log.warning("Skipping unparsed message %r", message)
             return
         connkey = ' '.join([
             connection_match.group('id'),
