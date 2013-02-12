@@ -53,7 +53,7 @@ def delete_many(session, model, id_list, per_page=100):
 class LogParser(object):
 
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
-    accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>[^:]+):\d+ ')
+    accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>.+):\d+ ')
     bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* mech=SIMPLE ')
     close_pattern = re.compile(r' closed$')
 
