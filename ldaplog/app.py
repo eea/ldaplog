@@ -1,6 +1,7 @@
 import os
 import logging
 import sqlalchemy.orm
+from werkzeug.local import LocalProxy
 import flask
 from flask.ext.script import Manager
 from . import logparser
@@ -20,6 +21,9 @@ class Database(object):
 
         self.log_engine = sqlalchemy.create_engine(os.environ['LOG_DATABASE'])
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
+
+
+db = LocalProxy(lambda: flask.current_app.extensions['db'])
 
 
 def register_admin(app):
@@ -45,7 +49,7 @@ def create_app(debug=False):
     app = flask.Flask(__name__)
     app.debug = debug
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-    db = app.extensions['db'] = Database(app)
+    app.extensions['db'] = Database(app)
     register_admin(app)
 
     @app.route('/')
@@ -70,14 +74,12 @@ manager.add_command('fixture', fixtures.fixture)
 
 @manager.command
 def syncdb():
-    db = flask.current_app.extensions['db']
     stats.Model.metadata.create_all(db.stat_engine)
     logparser.Model.metadata.create_all(db.log_engine)
 
 
 @manager.command
 def update():
-    db = flask.current_app.extensions['db']
     stat_session = db.StatSession()
     log_session = db.LogSession()
     events = logparser.parse_sql(log_session)
