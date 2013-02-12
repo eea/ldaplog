@@ -60,7 +60,9 @@ LOG_INTERLEAVED_BINDS = _log_fixture(TIME, 'ldap2', """
 conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
 conn=1008 fd=18 ACCEPT from IP=127.0.0.2:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz1,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 conn=1008 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1008 op=2 RESULT tag=97 err=0 text=
 """)
 
 
@@ -74,9 +76,11 @@ def test_parse_two_interleaved_binds():
 LOG_REUSED_CONNECTION_ID = _log_fixture(TIME, 'ldap2', """
 conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz1,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 conn=1007 fd=18 closed
 conn=1007 fd=19 ACCEPT from IP=127.0.0.2:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 """)
 
 

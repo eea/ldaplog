@@ -54,7 +54,7 @@ class LogParser(object):
 
     connection_pattern = re.compile(r'^conn=(?P<id>\d+) ')
     accept_pattern = re.compile(r' ACCEPT .* IP=(?P<addr>.+):\d+ ')
-    bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* mech=SIMPLE ')
+    bind_pattern = re.compile(r' BIND dn="uid=(?P<uid>[^,]+),.* ')
     close_pattern = re.compile(r' closed$')
 
     def __init__(self):
@@ -95,12 +95,16 @@ class LogParser(object):
 
         bind_match = self.bind_pattern.search(message)
         if bind_match:
-            event = {
+            conn['bind'] = {
                 'time': time,
                 'hostname': hostname,
                 'remote_addr': conn['remote_addr'],
                 'uid': bind_match.group('uid'),
             }
+            return
+
+        if 'bind' in conn:
+            event = conn.pop('bind')
             self.out.append(event)
             return
 
