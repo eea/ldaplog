@@ -61,6 +61,13 @@ def register_admin(app):
         (app.before_request_funcs.setdefault(view.blueprint.name, [])
                 .append(auth.require_login))
 
+    original_admin_master = (admin.index_view.blueprint.jinja_loader
+                             .load(app.jinja_env, 'admin/master.html'))
+
+    @app.context_processor
+    def original_admin_master_template():
+        return {'original_admin_master': original_admin_master}
+
 
 def create_app(config=None):
     app = flask.Flask(__name__)
