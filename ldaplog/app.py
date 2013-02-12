@@ -64,6 +64,8 @@ db = LocalProxy(lambda: flask.current_app.extensions['db'])
 
 
 manager = Manager(create_app)
+manager.add_option("-d", "--debug", dest="debug", type=bool,
+                   default=(os.environ.get('DEBUG') == 'on'))
 
 
 @manager.command
@@ -134,6 +136,4 @@ manager.add_command('fixture', fixture)
 
 
 def main(debug=False):
-    if debug:
-        log.setLevel(logging.DEBUG)
     manager.run()
