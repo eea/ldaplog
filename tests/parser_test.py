@@ -52,6 +52,7 @@ def test_parse_one_bind_operation():
         {'hostname': 'ldap2',
          'remote_addr': '127.0.0.1',
          'uid': 'uzer',
+         'success': True,
          'time': TIME},
     ])
 
@@ -60,7 +61,9 @@ LOG_INTERLEAVED_BINDS = _log_fixture(TIME, 'ldap2', """
 conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
 conn=1008 fd=18 ACCEPT from IP=127.0.0.2:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz1,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 conn=1008 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1008 op=2 RESULT tag=97 err=0 text=
 """)
 
 
@@ -74,9 +77,11 @@ def test_parse_two_interleaved_binds():
 LOG_REUSED_CONNECTION_ID = _log_fixture(TIME, 'ldap2', """
 conn=1007 fd=18 ACCEPT from IP=127.0.0.1:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz1,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 conn=1007 fd=18 closed
 conn=1007 fd=19 ACCEPT from IP=127.0.0.2:36676 (IP=0.0.0.0:389)
 conn=1007 op=2 BIND dn="uid=uz2,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=0 text=
 """)
 
 
@@ -183,5 +188,25 @@ def test_parse_ipv6_connection():
         {'hostname': 'ldap2',
          'remote_addr': '[::1]',
          'uid': 'uzer',
+         'time': TIME},
+    ])
+
+
+LOG_FAILED_BIND = _log_fixture(TIME, 'ldap2', """
+conn=1007 fd=18 ACCEPT from IP=[::1]:42737 (IP=[::]:389)
+conn=1007 op=2 BIND dn="uid=uzer,ou=users,o=eionet,l=europe" method=128
+conn=1007 op=2 BIND dn="uid=uzer,ou=Users,o=EIONET,l=Europe" mech=SIMPLE ssf=0
+conn=1007 op=2 RESULT tag=97 err=49 text=
+conn=1007 op=3 UNBIND
+conn=1007 fd=18 closed
+""")
+
+
+def test_flag_failed_bind():
+    assert_records_match(_parse_lines(LOG_FAILED_BIND), [
+        {'hostname': 'ldap2',
+         'remote_addr': '[::1]',
+         'uid': 'uzer',
+         'success': False,
          'time': TIME},
     ])
