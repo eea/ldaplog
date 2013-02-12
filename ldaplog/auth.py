@@ -43,6 +43,12 @@ def login():
     return flask.render_template('login.html')
 
 
+@auth.route('/logout')
+def logout():
+    del flask.session['username']
+    return flask.redirect(flask.url_for(LOGIN_DEFAULT_VIEW))
+
+
 def require_login():
     """ Make sure someone is logged in. Useful with `before_request` hook. """
     if flask.g.username is None:
