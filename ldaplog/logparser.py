@@ -95,19 +95,22 @@ class LogParser(object):
             syslog_tag,
         ])
 
+        def register_connection(remote_addr):
+            self.connections[connkey] = {
+                'remote_addr': remote_addr,
+            }
+
         accept_match = self.accept_pattern.search(message)
         if accept_match:
             if connkey in self.connections:
                 self.log.warning("Found ACCEPT for existing connection")
-            self.connections[connkey] = {
-                'remote_addr': accept_match.group('addr'),
-            }
+            register_connection(accept_match.group('addr'))
             return
 
         else:
             if connkey not in self.connections:
                 self.log.warning("Found record with no prior ACCEPT")
-                return
+                register_connection('unknown')
             conn = self.connections[connkey]
 
         close_match = self.close_pattern.search(message)
