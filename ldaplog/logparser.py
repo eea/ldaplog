@@ -49,7 +49,8 @@ class LogRowAdapter(logging.LoggerAdapter):
         self.record_id = None
 
     def process(self, msg, kwargs):
-        msg += ' (record.id=%r)' % self.record_id
+        extra = kwargs.setdefault('extra', {})
+        extra.setdefault('data', {})['record.id'] = self.record_id
         return (msg, kwargs)
 
 
