@@ -17,7 +17,7 @@ Installation
 ``requirements.txt``. The command to run the web server is listed in
 ``Procfile``. The easiest way to run the application is with a tool like
 `Foreman`, `honcho` or `Sarge`. The ``fab deploy`` command deploys to a
-`Sarge` server based on the ``TARGET`` environment variable.
+`Sarge` server based on the ``DEPLOYMENT_TARGET`` environment variable.
 
 Before `ldaplog` can parse log records, it needs to create some database
 tables, including a state table in the rsyslog database::
@@ -53,7 +53,7 @@ The following environment variables are used for configuration:
     If set to ``on``, look for HTTP headers set by a proxy, and change
     the request environment accordingly.
 
-``TARGET``
+``DEPLOYMENT_TARGET``
     Deployment host and directory, used by ``fab deploy``. Example:
     ``edw@capybara:/var/local/ldaplog``.
 
