@@ -37,8 +37,8 @@ class LogParserState(Model):
     __tablename__ = 'ldapmon_state'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    connkey = sa.Column(sa.String)
-    remote_addr = sa.Column(sa.String)
+    connkey = sa.Column(sa.String(100))
+    remote_addr = sa.Column(sa.String(100))
 
 
 class LogRowAdapter(logging.LoggerAdapter):

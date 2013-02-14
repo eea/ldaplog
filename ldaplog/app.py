@@ -77,6 +77,9 @@ def create_app(config=None):
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)
     register_admin(app)
+    if app.config.get('REVERSE_PROXY'):
+        from werkzeug.contrib.fixers import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
     return app
 
 
@@ -89,6 +92,7 @@ def config_from_environ():
         'AUTH_LDAP_TIMEOUT': 10,
         'AUTH_LDAP_SERVER': os.environ.get('AUTH_LDAP_SERVER'),
         'AUTH_LDAP_DN': os.environ.get('AUTH_LDAP_DN'),
+        'ALLOW_REVERSE_PROXY': (os.environ.get('DEBUG') == 'on'),
     }
 
 
@@ -111,3 +115,21 @@ def update():
     stats.update_stats(stat_session, events)
     stat_session.commit()
     log_session.commit()
+
+
+@manager.option('-p', '--port', type=int, default=5000)
+def tornado(port):
+    from tornado.web import Application, FallbackHandler
+    from tornado.wsgi import WSGIContainer
+    from tornado.httpserver import HTTPServer
+    from tornado.ioloop import IOLoop
+
+    app = flask.current_app
+    wsgi_container = WSGIContainer(app)
+    wsgi_container._log = lambda *args, **kwargs: None
+    handlers = [('.*', FallbackHandler, {'fallback': wsgi_container})]
+    tornado_app = Application(handlers, debug=app.debug)
+    http_server = HTTPServer(tornado_app)
+    http_server.listen(port)
+    log.info("Hambar109 Tornado listening on port %r", port)
+    IOLoop.instance().start()

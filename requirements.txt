@@ -14,3 +14,4 @@ Flask-WTF==0.8.2
 WTForms==1.0.3
 python-ldap==2.4.10
 simplejson==3.0.7
+tornado==2.4.1
