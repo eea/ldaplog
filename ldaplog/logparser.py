@@ -1,13 +1,22 @@
 import os
 import re
 import logging
+import logging.handlers
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
+import simplejson as json
 
 PARSER_DEBUG = (os.environ.get('PARSER_DEBUG') == 'on')
+PARSER_DEBUG_LOG = os.environ.get('PARSER_DEBUG_LOG')
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG if PARSER_DEBUG else logging.INFO)
+
+if PARSER_DEBUG_LOG:
+    _debug_handler = logging.handlers.WatchedFileHandler(PARSER_DEBUG_LOG)
+    _debug_handler.setLevel(logging.DEBUG)
+    log.addHandler(_debug_handler)
+
 
 Model = declarative_base()
 
@@ -134,6 +143,9 @@ class LogParser(object):
 
         for record in session.query(LogRecord).order_by('id'):
             self.log.record_id = record.id
+            log.debug("parsing log record %s", json.dumps(
+                {k: unicode(getattr(record, k)) for k in
+                 ['id', 'time', 'hostname', 'syslog_tag', 'message']}))
             self.handle_record(record.time, record.hostname,
                                record.syslog_tag, record.message.strip())
             to_remove.append(record.id)
