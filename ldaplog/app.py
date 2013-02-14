@@ -47,10 +47,14 @@ def register_admin(app):
     admin = Admin(app)
     db = app.extensions['db']
     _admin_session = db.StatSession()  # TODO should not be global
-    admin.add_view(ModelView(stats.Person, _admin_session))
-    admin.add_view(ModelView(stats.Login, _admin_session))
 
-    class LogRecordView(ModelView):
+    class ReadOnlyModelView(ModelView):
+        can_create = can_edit = can_delete = False
+
+    admin.add_view(ReadOnlyModelView(stats.Person, _admin_session))
+    admin.add_view(ReadOnlyModelView(stats.Login, _admin_session))
+
+    class LogRecordView(ReadOnlyModelView):
         column_searchable_list = ('message',)
         page_size = 10
 
