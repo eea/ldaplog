@@ -109,12 +109,14 @@ def syncdb():
 
 @manager.command
 def update():
-    stat_session = db.StatSession()
-    log_session = db.LogSession()
-    events = logparser.parse_sql(log_session)
-    stats.update_stats(stat_session, events)
-    stat_session.commit()
-    log_session.commit()
+    more = True
+    while more:
+        stat_session = db.StatSession()
+        log_session = db.LogSession()
+        events, more = logparser.parse_sql(log_session)
+        stats.update_stats(stat_session, events)
+        stat_session.commit()
+        log_session.commit()
 
 
 @manager.option('-p', '--port', type=int, default=5000)

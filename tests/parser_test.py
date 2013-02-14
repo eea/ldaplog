@@ -97,7 +97,7 @@ def test_parse_records_from_sql():
     Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_ONE_BIND)
-    assert_records_match(logparser.parse_sql(session), [
+    assert_records_match(logparser.parse_sql(session)[0], [
         {'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME},
     ])
 
@@ -127,10 +127,10 @@ def test_state_is_saved_for_unclosed_connections():
     Session = create_memory_db(logparser.Model.metadata)
     session = Session()
     _insert_log_records(session, LOG_CHUNKS_1)
-    assert_records_match(logparser.parse_sql(session), [])
+    assert_records_match(logparser.parse_sql(session)[0], [])
     assert_equal(session.query(logparser.LogParserState).count(), 1)
     _insert_log_records(session, LOG_CHUNKS_2)
-    assert_records_match(logparser.parse_sql(session), [
+    assert_records_match(logparser.parse_sql(session)[0], [
         {'remote_addr': '127.0.0.1', 'uid': 'uzer', 'time': TIME},
     ])
     assert_equal(session.query(logparser.LogParserState).count(), 0)

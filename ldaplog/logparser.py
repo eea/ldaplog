@@ -8,6 +8,7 @@ import simplejson as json
 
 PARSER_DEBUG = (os.environ.get('PARSER_DEBUG') == 'on')
 PARSER_DEBUG_LOG = os.environ.get('PARSER_DEBUG_LOG')
+PARSER_CHUNK = int(os.environ.get('PARSER_CHUNK', 1000))
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG if PARSER_DEBUG else logging.INFO)
@@ -139,9 +140,12 @@ class LogParser(object):
         self.log.debug("Done loading existing connections: %r",
                        self.connections.keys())
 
+        records = session.query(LogRecord).order_by('id')
+        count = records.count()
+        more = count > PARSER_CHUNK
         to_remove = []
-
-        for record in session.query(LogRecord).order_by('id'):
+        log.info("Fetching %d records out of %d...", PARSER_CHUNK, count)
+        for record in records.limit(PARSER_CHUNK):
             self.log.record_id = record.id
             log.debug("parsing log record %s", json.dumps(
                 {k: unicode(getattr(record, k)) for k in
@@ -157,6 +161,7 @@ class LogParser(object):
         session.add_all([LogParserState(connkey=connkey,
                                         remote_addr=conn['remote_addr'])
                          for connkey, conn in self.connections.iteritems()])
+        return more
 
 
 _to_dict = lambda row: {c.name: getattr(row, c.name)
@@ -165,5 +170,5 @@ _to_dict = lambda row: {c.name: getattr(row, c.name)
 
 def parse_sql(session):
     parser = LogParser()
-    parser.parse_sql(session)
-    return parser.out
+    more = parser.parse_sql(session)
+    return parser.out, more
