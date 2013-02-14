@@ -1,0 +1,13 @@
+{% extends original_admin_master %}
+
+
+{% block brand %}
+
+  {{ super() }}
+
+  <span class="pull-right">
+    {{ g.username }}
+    (<a href="{{ url_for('auth.logout') }}">logout</a>)
+  </span>
+
+{% endblock %}
