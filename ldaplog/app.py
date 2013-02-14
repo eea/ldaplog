@@ -30,6 +30,7 @@ views = flask.Blueprint('views', __name__)
 
 
 @views.route('/_crashme')
+@auth.login_required
 def crashme():
     raise RuntimeError("Crashing, as requested")
 

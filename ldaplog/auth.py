@@ -1,3 +1,4 @@
+from functools import wraps
 import flask
 import ldap
 
@@ -54,3 +55,14 @@ def require_login():
     if flask.g.username is None:
         url = flask.url_for('auth.login', next=flask.request.url)
         return flask.redirect(url)
+
+
+def login_required(func):
+    """ Decorator that checks for login. """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        rv = require_login()
+        if rv is not None:
+            return rv
+        return func(*args, **kwargs)
+    return wrapper

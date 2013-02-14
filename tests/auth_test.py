@@ -43,3 +43,4 @@ def test_admin_views_require_authentication():
 
     client.post('/_set_username', data={'username': ''})
     assert_false(redirects_to_login('/login'))
+    assert_true(redirects_to_login('/_crashme'))
