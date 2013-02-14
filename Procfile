@@ -1,1 +1,1 @@
-web: ./manage.py runserver
+web: ./manage.py tornado -p $PORT
