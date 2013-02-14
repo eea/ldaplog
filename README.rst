@@ -1,11 +1,11 @@
 LDAP event monitor
 ==================
-`ldap_mon` is an application that reads OpenLDAP log entries, parses
+`ldaplog` is an application that reads OpenLDAP log entries, parses
 them, and keeps track of the most recent login time of each user on each
 server.
 
 Log output from `slapd` needs to be captured, e.g. using `rsyslog`, and
-stored in a `MySQL` database. `ldap_mon` polls the log database, parses
+stored in a `MySQL` database. `ldaplog` polls the log database, parses
 records, and updates the results in its own database. It also purges old
 slapd log records, and any log records from unknown sources, so that the
 log database doesn't grow indefinitely.
@@ -13,20 +13,21 @@ log database doesn't grow indefinitely.
 
 Installation
 ============
-`ldap_mon` requires Python 2.7. Dependencies are listed in
+`ldaplog` requires Python 2.7. Dependencies are listed in
 ``requirements.txt``. The command to run the web server is listed in
 ``Procfile``. The easiest way to run the application is with a tool like
 `Foreman`, `honcho` or `Sarge`. The ``fab deploy`` command deploys to a
 `Sarge` server based on the ``TARGET`` environment variable.
 
+Before `ldaplog` can parse log records, it needs to create some database
+tables, including a state table in the rsyslog database::
 
-Place the following command in a cron job to read log entries from the
-database. The ``remove=on`` flag removes old or irrelevant entries.
-Don't forget to set the ``CRON_KEY`` variable.
+    ./manage.py syncdb
 
-::
+Run the following command every few minutes to parse new log entries
+from the database::
 
-    curl -F 'remove=on' -F 'key=THEKEY' 'http://localhost:38200/fetch_and_parse'
+    ./manage.py update
 
 
 Configuration variables
@@ -34,21 +35,19 @@ Configuration variables
 The following environment variables are used for configuration:
 
 ``DEBUG``
-    If set to ``on``, the application will start in debug mode.
+    If set to ``on``, the application will start in debug mode. Never
+    use in production, it allows for remote code execution.
 
-``RSYSLOG_DATABASE_URI``
-    URI of MySQL database where `rsyslog` dumps log records. Used by
-    `fetchlog`.
-
-``DATABASE_URI``
-    URI of `ldap_mon` application database where statistics will be
+``DATABASE``
+    URI of `ldaplog` application database where statistics will be
     saved.
 
-``SECRET_KEY``
-    Random secret used for session security.
+``LOG_DATABASE``
+    URI of MySQL database where `rsyslog` dumps log records. Used by
+    the `update` command.
 
-``STATIC_URL``
-    URL where static media files are served.
+``SECRET_KEY``
+    Random secret used for HTTP session security.
 
 ``ALLOW_REVERSE_PROXY``
     If set to ``on``, look for HTTP headers set by a proxy, and change
@@ -56,14 +55,17 @@ The following environment variables are used for configuration:
 
 ``TARGET``
     Deployment host and directory, used by ``fab deploy``. Example:
-    ``edw@capybara:/var/local/ldap_mon``.
+    ``edw@capybara:/var/local/ldaplog``.
 
-``CRON_KEY``
-    Secret key used by a cron job when calling `fetch_and_parse`.
+``SENTRY_DSN``
+    Optional Sentry URL to gather errors.
 
-``DELETE_LOG_FILE``
-    If set, when removing old log entries from the database, they are
-    also written to this file, for debugging.
+``AUTH_LDAP_SERVER``, ``AUTH_LDAP_DN``
+    LDAP server to use for logins in the `ldaplog` web interface.
+    Example::
+
+        AUTH_LDAP_SERVER=ldap://ldap2.eionet.europa.eu
+        AUTH_LDAP_DN=uid={username},ou=Users,o=EIONET,l=Europe
 
 
 Configuring rsyslog-mysql
