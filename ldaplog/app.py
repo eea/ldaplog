@@ -77,6 +77,9 @@ def create_app(config=None):
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)
     register_admin(app)
+    if app.config.get('REVERSE_PROXY'):
+        from werkzeug.contrib.fixers import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app)
     return app
 
 
@@ -89,6 +92,7 @@ def config_from_environ():
         'AUTH_LDAP_TIMEOUT': 10,
         'AUTH_LDAP_SERVER': os.environ.get('AUTH_LDAP_SERVER'),
         'AUTH_LDAP_DN': os.environ.get('AUTH_LDAP_DN'),
+        'ALLOW_REVERSE_PROXY': (os.environ.get('DEBUG') == 'on'),
     }
 
 
