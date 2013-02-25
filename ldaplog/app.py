@@ -19,9 +19,37 @@ class Database(object):
     def __init__(self, app):
         self.stat_engine = sqlalchemy.create_engine(app.config['DATABASE'])
         self.StatSession = sqlalchemy.orm.sessionmaker(bind=self.stat_engine)
+        self.stat_session = LocalProxy(lambda: self._get_session('stat'))
 
         self.log_engine = sqlalchemy.create_engine(app.config['LOG_DATABASE'])
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
+        self.log_session = LocalProxy(lambda: self._get_session('log'))
+
+        app.teardown_request(self.cleanup_sessions)
+
+    def _get_context(self):
+        appctx = flask._request_ctx_stack.top
+        if not hasattr(appctx, 'db'):
+            appctx.db = {}
+        return appctx.db
+
+    def _get_session(self, name):
+        ctx = self._get_context()
+        if name not in ctx:
+            if name == 'stat':
+                session = self.StatSession()
+            elif name == 'log':
+                session = self.LogSession()
+            else:
+                raise RuntimeError('Unknown session type %r' % (name,))
+            print 'new session %r (%d)' % (name, id(session.connection()))
+            ctx[name] = session
+        return ctx[name]
+
+    def cleanup_sessions(self, err=None):
+        ctx = self._get_context()
+        for k in list(ctx):
+            ctx.pop(k).rollback()
 
 
 db = LocalProxy(lambda: flask.current_app.extensions['db'])
@@ -46,20 +74,18 @@ def register_admin(app):
 
     admin = Admin(app)
     db = app.extensions['db']
-    _admin_session = db.StatSession()  # TODO should not be global
 
     class ReadOnlyModelView(ModelView):
         can_create = can_edit = can_delete = False
 
-    admin.add_view(ReadOnlyModelView(stats.Person, _admin_session))
-    admin.add_view(ReadOnlyModelView(stats.Login, _admin_session))
+    admin.add_view(ReadOnlyModelView(stats.Person, db.stat_session))
+    admin.add_view(ReadOnlyModelView(stats.Login, db.stat_session))
 
     class LogRecordView(ReadOnlyModelView):
         column_searchable_list = ('message',)
         page_size = 10
 
-    _admin_log_session = db.LogSession()  # TODO should not be global
-    _admin_log_record = LogRecordView(logparser.LogRecord, _admin_log_session)
+    _admin_log_record = LogRecordView(logparser.LogRecord, db.log_session)
     admin.add_view(_admin_log_record)
 
     for view in admin._views:
