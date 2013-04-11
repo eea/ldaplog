@@ -1,6 +1,4 @@
 import os
-import subprocess
-from StringIO import StringIO
 from fabric.api import *
 
 _host, _directory = os.environ['DEPLOYMENT_TARGET'].split(':')
@@ -10,11 +8,27 @@ env['use_ssh_config'] = True
 
 
 @task
+def pack():
+    # create a new source distribution as tarball
+    local('python setup.py sdist --formats=gztar', capture=False)
+
+@task
 def deploy():
-    tarball = subprocess.check_output(['git', 'archive', 'HEAD'])
-    with cd(env['target_directory']):
-        put(StringIO(tarball), '_app.tar')
-        try:
-            run('bin/sarge deploy _app.tar web')
-        finally:
-            run('rm _app.tar')
+    execute("pack")
+    # figure out the release name and version
+    dist = local('python setup.py --fullname', capture=True).strip()
+    # upload the source tarball to the temporary folder on the server
+    put('dist/%s.tar.gz' % dist, '/tmp/%s.tar.gz' % dist)
+    # create a place where we can unzip the tarball, then enter
+    # that directory and unzip it
+    run('mkdir /tmp/%s' % dist)
+    try:
+        with cd('/tmp/%s' % dist):
+            run('tar xzf /tmp/%s.tar.gz' % dist)
+            # now setup the package in our virtual environment
+            with cd(dist):
+                run('%s/bin/python setup.py install' % env['target_directory'])
+    except:
+        pass
+    finally:
+        run('rm -rf /tmp/%s /tmp/%s.tar.gz' % (dist, dist))
