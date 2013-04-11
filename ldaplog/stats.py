@@ -15,7 +15,7 @@ class Person(Model):
 
     __tablename__ = 'person'
     id = sa.Column(sa.Integer, primary_key=True)
-    uid = sa.Column(sa.String, unique=True)
+    uid = sa.Column(sa.String(32), unique=True)
     last_login = sa.Column(sa.DateTime)
 
     @classmethod
@@ -35,8 +35,8 @@ class Login(Model):
     id = sa.Column(sa.Integer, primary_key=True)
     time = sa.Column(sa.DateTime)
     success = sa.Column(sa.Boolean)
-    hostname = sa.Column(sa.String)
-    remote = sa.Column(sa.String)
+    hostname = sa.Column(sa.String(128))
+    remote = sa.Column(sa.String(128))
 
 
 def update_stats(session, events):
