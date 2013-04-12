@@ -20,7 +20,7 @@ def main():
     if SENTRY_DSN:
         from raven.conf import setup_logging
         from raven.handlers.logging import SentryHandler
-        setup_logging(SentryHandler(SENTRY_DSN, level=logging.WARN))
+        setup_logging(SentryHandler(SENTRY_DSN, level=logging.ERROR))
 
     manager.run()
 
