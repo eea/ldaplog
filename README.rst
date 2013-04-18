@@ -29,6 +29,9 @@ from the database::
 
     ./manage.py update
 
+We currently keep the list of users in users.txt file, uid of users
+in LDAP, one per line.
+
 
 Configuration variables
 =======================

@@ -1,4 +1,6 @@
 from functools import wraps
+import os.path
+
 import flask
 import ldap
 
@@ -20,6 +22,14 @@ def authenticate(username, password):
     return True
 
 
+def get_admins():
+    acl_file = os.path.join(flask.instance_path, "users.txt")
+    if os.path.exists(acl_file):
+        fcontents = fopen().read()
+        return fcontents.strip().split("\n")
+    return []
+
+
 @auth.before_app_request
 def load_user():
     flask.g.username = flask.session.get('username')
@@ -33,11 +43,13 @@ def login():
         password = request.form['password']
 
         if authenticate(username, password):
-            flask.session['username'] = username
-            flask.flash("Logged in as %s" % username, 'success')
-            url = request.args.get('next') or flask.url_for(LOGIN_DEFAULT_VIEW)
-            return flask.redirect(url)
-
+            if username in get_admins():
+                flask.session['username'] = username
+                flask.flash("Logged in as %s" % username, 'success')
+                url = request.args.get('next') or flask.url_for(LOGIN_DEFAULT_VIEW)
+                return flask.redirect(url)
+            else:
+                flask.flash("User is not allowed access here", 'error')
         else:
             flask.flash("Bad username or password", 'error')
 
