@@ -23,9 +23,9 @@ def authenticate(username, password):
 
 
 def get_admins():
-    acl_file = os.path.join(flask.instance_path, "users.txt")
+    acl_file = os.path.join(flask.current_app.instance_path, "users.txt")
     if os.path.exists(acl_file):
-        fcontents = fopen().read()
+        fcontents = open(acl_file).read()
         return fcontents.strip().split("\n")
     return []
 
