@@ -13,6 +13,11 @@ def pack():
     local('python setup.py sdist --formats=gztar', capture=False)
 
 @task
+def restart():
+    # create a new source distribution as tarball
+    run('%s/bin/supervisorctl restart ldaplogger' % env['target_directory'])
+
+@task
 def deploy():
     execute("pack")
     # figure out the release name and version
