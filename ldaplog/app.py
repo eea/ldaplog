@@ -78,7 +78,11 @@ def register_admin(app):
     class ReadOnlyModelView(ModelView):
         can_create = can_edit = can_delete = False
 
-    admin.add_view(ReadOnlyModelView(stats.Person, db.stat_session))
+    class PersonView(ReadOnlyModelView):
+        column_searchable_list = ('uid',)
+        column_default_sort = ('last_login', True)
+
+    admin.add_view(PersonView(stats.Person, db.stat_session))
     admin.add_view(ReadOnlyModelView(stats.Login, db.stat_session))
 
     class LogRecordView(ReadOnlyModelView):
@@ -101,8 +105,11 @@ def register_admin(app):
 
 
 def create_app(config=None):
-    app = flask.Flask(__name__)
-    app.config.update(config or {})
+    app = flask.Flask(__name__, instance_relative_config=True)
+    try:
+        app.config.from_pyfile('settings.py')
+    except IOError, e:
+        app.config.update(config or {})
     app.extensions['db'] = Database(app)
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)

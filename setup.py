@@ -25,7 +25,7 @@ setup(
         'pytz==2012j',
         'six==1.2.0',
         'times==0.6.1',
-        'Flask-Admin==1.0.4',
+        'Flask-Admin==1.0.6',
         'Flask-WTF==0.8.2',
         'WTForms==1.0.3',
         'python-ldap==2.4.10',
