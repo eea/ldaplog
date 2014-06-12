@@ -151,9 +151,8 @@ class LogParser(object):
         log.info("Fetching %d records out of %d...", PARSER_CHUNK, count)
         for record in records.limit(PARSER_CHUNK):
             self.log.record_id = record.id
-            log.debug("parsing log record %s", json.dumps(
-                {k: unicode(getattr(record, k)) for k in
-                 ['id', 'time', 'hostname', 'syslog_tag', 'message']}))
+            if isinstance(record.message, str):
+                record.message = unicode(record.message, 'utf8')
             self.handle_record(record.time, record.hostname,
                                record.syslog_tag, record.message.strip())
             to_remove.append(record.id)
