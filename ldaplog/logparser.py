@@ -4,7 +4,6 @@ import logging
 import logging.handlers
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
-import simplejson as json
 
 PARSER_DEBUG = (os.environ.get('PARSER_DEBUG') == 'on')
 PARSER_DEBUG_LOG = os.environ.get('PARSER_DEBUG_LOG')
@@ -28,8 +27,8 @@ class LogRecord(Model):
 
     id = sa.Column('ID', sa.Integer, primary_key=True)
     time = sa.Column('ReceivedAt', sa.DateTime)
-    hostname = sa.Column('FromHost', sa.String)
-    syslog_tag = sa.Column('SysLogTag', sa.String)
+    hostname = sa.Column('FromHost', sa.String(128))
+    syslog_tag = sa.Column('SysLogTag', sa.String(128))
     message = sa.Column('Message', sa.Text)
 
 

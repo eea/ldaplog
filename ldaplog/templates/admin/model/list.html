@@ -1,0 +1,10 @@
+{% extends original_admin_model_list %}
+
+{% block body %}
+  {{ super() }}
+  {% if g.export_url %}
+    <form action="{{ g.export_url }}">
+        <input type="submit" value="Export to excel"/>
+    </form>
+  {% endif %}
+{% endblock body %}

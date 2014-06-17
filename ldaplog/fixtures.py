@@ -2,7 +2,7 @@ import sys
 import logging
 import flask
 from flask.ext.script import Manager
-from . import logparser
+import logparser
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

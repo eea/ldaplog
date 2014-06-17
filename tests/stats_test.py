@@ -1,19 +1,23 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 from nose.tools import assert_equal
+import unittest
 from utils import create_memory_db
+from ldaplog import stats
 
+import os.path
+TESTS_DIR = os.path.dirname(__file__)
 
 TIME = datetime(2013, 1, 27, 13, 34, 55)
+TIME2 = datetime(2014, 1, 27, 13, 34, 55)
 
 
 def _create_session():
-    from ldaplog import stats
     Session = create_memory_db(stats.Model.metadata)
     return Session()
 
 
 def test_event_updates_last_login():
-    from ldaplog import stats
     session = _create_session()
     stats.update_stats(session, [
         {'uid': 'uzer',
@@ -27,7 +31,6 @@ def test_event_updates_last_login():
 
 
 def test_failed_bind_does_not_update_last_login():
-    from ldaplog import stats
     session = _create_session()
     stats.update_stats(session, [
         {'uid': 'uzer',
@@ -41,7 +44,6 @@ def test_failed_bind_does_not_update_last_login():
 
 
 def test_after_multiple_logins_only_last_is_saved():
-    from ldaplog import stats
     session = _create_session()
     stats.update_stats(session, [
         {'uid': 'uzer',
@@ -60,7 +62,6 @@ def test_after_multiple_logins_only_last_is_saved():
 
 
 def test_log_bind_attempts_for_each_server():
-    from ldaplog import stats
     t1 = TIME + timedelta(seconds=1)
     t2 = TIME + timedelta(seconds=2)
     session = _create_session()
@@ -90,7 +91,6 @@ def test_log_bind_attempts_for_each_server():
 
 
 def test_log_bind_success_status():
-    from ldaplog import stats
     session = _create_session()
     stats.update_stats(session, [
         {'uid': 'uzer',
@@ -109,3 +109,57 @@ def test_log_bind_success_status():
         ('ldap1', True),
         ('ldap2', False),
     ])
+
+
+class TestPerson(unittest.TestCase):
+    def setUp(self):
+        self.fields = [ c.name for c in stats.Person.__table__.columns if c.name not in ['id'] ]
+        self.session = _create_session()
+
+    def test_export_excel_prepare_data_latin(self):
+        user = u'uzerâ'.encode('latin1')
+        stats.update_stats(self.session, [
+            {'uid': user,
+            'time': TIME,
+            'success': True,
+            'hostname': 'ldap2',
+            'remote_addr': '10.0.0.2'},
+        ])
+        persons = self.session.query(stats.Person).all()
+        expected = [[user.decode('latin1').encode('utf8'), str(TIME)]]
+        results = []
+        for person in persons:
+            results.append(person.prepare_export_row(self.fields))
+        self.assertEqual(results, expected)
+
+    def test_export_excel_prepare_data(self):
+        stats.update_stats(self.session, [
+            {'uid': 'uzer',
+            'time': TIME,
+            'success': True,
+            'hostname': 'ldap2',
+            'remote_addr': '10.0.0.2'},
+            {'uid': 'uzer2',
+            'time': TIME,
+            'success': True,
+            'hostname': 'ldap2',
+            'remote_addr': '10.0.0.2'},
+            {'uid': 'uzer2',
+            'time': TIME2,
+            'success': True,
+            'hostname': 'ldap2',
+            'remote_addr': '10.0.0.2'},
+        ])
+        persons = self.session.query(stats.Person).all()
+        expected = [['uzer', str(TIME)], ['uzer2', str(TIME2)]]
+        results = []
+        for person in persons:
+            results.append(person.prepare_export_row(self.fields))
+        self.assertEqual(results, expected)
+
+    def test_export_excel(self):
+        from ldaplog.tools import create_excel
+        rows =  ( r for r in [[u'uzerâ'.encode('utf8'), str(TIME)], ['uzer2', str(TIME2)]] )
+        xls = create_excel('tst_excel_export', self.fields, rows)
+        expected = open(os.path.join(TESTS_DIR, 'person.xls'), 'r').read()
+        self.assertEqual(xls, expected)

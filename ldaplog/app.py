@@ -4,10 +4,12 @@ import sqlalchemy.orm
 from werkzeug.local import LocalProxy
 import flask
 from flask.ext.script import Manager
-from . import logparser
-from . import stats
-from . import fixtures
-from . import auth
+from flask.ext.admin import expose
+import logparser
+import stats
+import fixtures
+import auth
+from jinja2 import contextfunction
 
 
 log = logging.getLogger(__name__)
@@ -17,11 +19,11 @@ log.setLevel(logging.INFO)
 class Database(object):
 
     def __init__(self, app):
-        self.stat_engine = sqlalchemy.create_engine(app.config['DATABASE'])
+        self.stat_engine = sqlalchemy.create_engine(app.config['DATABASE'], encoding='latin1')
         self.StatSession = sqlalchemy.orm.sessionmaker(bind=self.stat_engine)
         self.stat_session = LocalProxy(lambda: self._get_session('stat'))
 
-        self.log_engine = sqlalchemy.create_engine(app.config['LOG_DATABASE'])
+        self.log_engine = sqlalchemy.create_engine(app.config['LOG_DATABASE'], encoding='latin1')
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
         self.log_session = LocalProxy(lambda: self._get_session('log'))
 
@@ -65,12 +67,14 @@ def crashme():
 
 @views.route('/')
 def home():
-    return flask.redirect(flask.url_for('admin.index'))
+    return flask.redirect(flask.url_for('personview.index_view'))
 
 
 def register_admin(app):
     from flask.ext.admin import Admin
     from flask.ext.admin.contrib.sqlamodel import ModelView
+    from stats import Person
+    from tools import create_excel
 
     admin = Admin(app)
     db = app.extensions['db']
@@ -78,12 +82,40 @@ def register_admin(app):
     class ReadOnlyModelView(ModelView):
         can_create = can_edit = can_delete = False
 
+        @contextfunction
+        def get_list_value(self, context, model, name):
+            value = super(ReadOnlyModelView, self).get_list_value(context, model, name)
+            if isinstance(value, str):
+                value = unicode(value, 'latin1')
+            return value
+
     class PersonView(ReadOnlyModelView):
         column_searchable_list = ('uid',)
         column_default_sort = ('last_login', True)
+        page_size = 10
+
+        skippable_fields = ['id']
+        exportable_fields = [ c.name for c in Person.__table__.columns if c.name not in skippable_fields ]
+
+        @expose('/export_excel')
+        def export_excel(self):
+            stat_session = db.StatSession()
+            persons = stat_session.query(Person)
+
+            rows = ( obj.prepare_export_row(self.exportable_fields) for obj in persons )
+            xls = create_excel(Person.__tablename__, self.exportable_fields, rows)
+            response = flask.make_response(xls)
+            response.headers["Content-Type"] = "application/vnd.ms-excel; charset=UTF-8"
+            response.headers["Content-Disposition"] = "attachment; filename=persons.xls"
+            return response
+
+        @expose('/')
+        def index_view(self):
+            flask.g.export_url = flask.url_for('personview.export_excel')
+            return super(PersonView, self).index_view()
+
 
     admin.add_view(PersonView(stats.Person, db.stat_session))
-    admin.add_view(ReadOnlyModelView(stats.Login, db.stat_session))
 
     class LogRecordView(ReadOnlyModelView):
         column_searchable_list = ('message',)
@@ -92,16 +124,22 @@ def register_admin(app):
     _admin_log_record = LogRecordView(logparser.LogRecord, db.log_session)
     admin.add_view(_admin_log_record)
 
+    # remove Home from top menu
+    del admin._menu[0]
+
     for view in admin._views:
         (app.before_request_funcs.setdefault(view.blueprint.name, [])
                 .append(auth.require_login))
 
     original_admin_master = (admin.index_view.blueprint.jinja_loader
                              .load(app.jinja_env, 'admin/master.html'))
+    original_admin_model_list = (admin.index_view.blueprint.jinja_loader
+                             .load(app.jinja_env, 'admin/model/list.html'))
 
     @app.context_processor
     def original_admin_master_template():
-        return {'original_admin_master': original_admin_master}
+        return {'original_admin_master': original_admin_master,
+                'original_admin_model_list': original_admin_model_list}
 
 
 def create_app(config=None):

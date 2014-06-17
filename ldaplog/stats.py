@@ -28,6 +28,17 @@ class Person(Model):
             session.add(person)
             return person
 
+    def prepare_export_row(self, fields):
+        row = []
+        for field in fields:
+            value = getattr(self, field)
+            if isinstance(value, str):
+                v = value.decode('latin1').encode('utf8')
+            else:
+                v = str(value)
+            row.append(v)
+        return row
+
 
 class Login(Model):
 

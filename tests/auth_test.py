@@ -34,8 +34,7 @@ def test_admin_views_require_authentication():
             raise AssertionError("Unexpected response %r" % resp)
 
     client = app.test_client()
-    for url in ['/admin/', '/admin/personview/',
-                '/admin/loginview/', '/admin/logrecordview/']:
+    for url in ['/admin/', '/admin/personview/', '/admin/logrecordview/']:
         client.post('/_set_username', data={'username': 'somebody'})
         assert_false(redirects_to_login(url))
         client.post('/_set_username', data={'username': ''})

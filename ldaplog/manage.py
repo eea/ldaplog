@@ -2,7 +2,7 @@
 
 import os
 import logging
-from ldaplog.app import manager
+from app import manager
 
 
 def configure_logging(level):
