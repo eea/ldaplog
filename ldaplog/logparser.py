@@ -151,7 +151,7 @@ class LogParser(object):
         for record in records.limit(PARSER_CHUNK):
             self.log.record_id = record.id
             if isinstance(record.message, str):
-                record.message = unicode(record.message, 'utf8')
+                record.message = unicode(record.message, 'latin1')
             self.handle_record(record.time, record.hostname,
                                record.syslog_tag, record.message.strip())
             to_remove.append(record.id)
