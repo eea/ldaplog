@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='ldaplog',
-    version='1.1',
+    version='1.2',
     url='https://github.com/eea/ldaplog',
     license='Mozilla Public License',
     author='Eau de Web',

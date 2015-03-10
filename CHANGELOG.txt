@@ -1,0 +1,6 @@
+1.2 - 2015-03-10
+----------------
+
+* Added the /export view, which is to be used by any webservice.
+  Returns JSON information about logins.
+
