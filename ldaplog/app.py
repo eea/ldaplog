@@ -1,15 +1,16 @@
-import os
-import logging
-import sqlalchemy.orm
-from werkzeug.local import LocalProxy
-import flask
-from flask.ext.script import Manager
 from flask.ext.admin import expose
-import logparser
-import stats
-import fixtures
-import auth
+from flask.ext.script import Manager
+from flask.views import View
 from jinja2 import contextfunction
+from werkzeug.local import LocalProxy
+import auth
+import fixtures
+import flask
+import logging
+import logparser
+import os
+import sqlalchemy.orm
+import stats
 
 
 log = logging.getLogger(__name__)
@@ -19,11 +20,13 @@ log.setLevel(logging.INFO)
 class Database(object):
 
     def __init__(self, app):
-        self.stat_engine = sqlalchemy.create_engine(app.config['DATABASE'], encoding='latin1')
+        self.stat_engine = sqlalchemy.create_engine(
+            app.config['DATABASE'], encoding='latin1')
         self.StatSession = sqlalchemy.orm.sessionmaker(bind=self.stat_engine)
         self.stat_session = LocalProxy(lambda: self._get_session('stat'))
 
-        self.log_engine = sqlalchemy.create_engine(app.config['LOG_DATABASE'], encoding='latin1')
+        self.log_engine = sqlalchemy.create_engine(
+            app.config['LOG_DATABASE'], encoding='latin1')
         self.LogSession = sqlalchemy.orm.sessionmaker(bind=self.log_engine)
         self.log_session = LocalProxy(lambda: self._get_session('log'))
 
@@ -84,7 +87,8 @@ def register_admin(app):
 
         @contextfunction
         def get_list_value(self, context, model, name):
-            value = super(ReadOnlyModelView, self).get_list_value(context, model, name)
+            value = super(ReadOnlyModelView, self).get_list_value(
+                context, model, name)
             if isinstance(value, str):
                 value = unicode(value, 'latin1')
             return value
@@ -95,25 +99,30 @@ def register_admin(app):
         page_size = 10
 
         skippable_fields = ['id']
-        exportable_fields = [ c.name for c in Person.__table__.columns if c.name not in skippable_fields ]
+        exportable_fields = [
+            c.name for c in Person.__table__.columns
+            if c.name not in skippable_fields]
 
         @expose('/export_excel')
         def export_excel(self):
             stat_session = db.StatSession()
             persons = stat_session.query(Person)
 
-            rows = ( obj.prepare_export_row(self.exportable_fields) for obj in persons )
-            xls = create_excel(Person.__tablename__, self.exportable_fields, rows)
+            rows = (obj.prepare_export_row(self.exportable_fields)
+                    for obj in persons)
+            xls = create_excel(
+                Person.__tablename__, self.exportable_fields, rows)
             response = flask.make_response(xls)
-            response.headers["Content-Type"] = "application/vnd.ms-excel; charset=UTF-8"
-            response.headers["Content-Disposition"] = "attachment; filename=persons.xls"
+            response.headers[
+                "Content-Type"] = "application/vnd.ms-excel; charset=UTF-8"
+            response.headers[
+                "Content-Disposition"] = "attachment; filename=persons.xls"
             return response
 
         @expose('/')
         def index_view(self):
             flask.g.export_url = flask.url_for('personview.export_excel')
             return super(PersonView, self).index_view()
-
 
     admin.add_view(PersonView(stats.Person, db.stat_session))
 
@@ -129,17 +138,34 @@ def register_admin(app):
 
     for view in admin._views:
         (app.before_request_funcs.setdefault(view.blueprint.name, [])
-                .append(auth.require_login))
+         .append(auth.require_login))
 
     original_admin_master = (admin.index_view.blueprint.jinja_loader
                              .load(app.jinja_env, 'admin/master.html'))
     original_admin_model_list = (admin.index_view.blueprint.jinja_loader
-                             .load(app.jinja_env, 'admin/model/list.html'))
+                                 .load(app.jinja_env, 'admin/model/list.html'))
 
     @app.context_processor
     def original_admin_master_template():
         return {'original_admin_master': original_admin_master,
                 'original_admin_model_list': original_admin_model_list}
+
+
+class ExportUsers(View):
+
+    def dispatch_request(self):
+        stat_session = db.StatSession()
+        persons = stat_session.query(stats.Person)
+        skippable_fields = ['id']
+
+        exportable_fields = [
+            c.name for c in stats.Person.__table__.columns
+            if c.name not in skippable_fields]
+
+        rows = list(obj.prepare_export_row(exportable_fields)
+                    for obj in persons)
+        response = flask.jsonify(rows)
+        return response
 
 
 def create_app(config=None):
@@ -148,13 +174,18 @@ def create_app(config=None):
         app.config.from_pyfile('settings.py')
     except IOError, e:
         app.config.update(config or {})
+
     app.extensions['db'] = Database(app)
     app.register_blueprint(views)
     app.register_blueprint(auth.auth)
     register_admin(app)
+
     if app.config.get('REVERSE_PROXY'):
         from werkzeug.contrib.fixers import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app)
+
+    app.add_url_rule('/export', view_func=ExportUsers.as_view('export'))
+
     return app
 
 
