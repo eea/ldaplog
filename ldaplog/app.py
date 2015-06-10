@@ -25,11 +25,7 @@ class Database(object):
         }
 
         if app.config['DATABASE'].startswith('mysql'):
-            options.setdefault('SQLALCHEMY_RECORD_QUERIES', None)
-            options.setdefault('SQLALCHEMY_POOL_SIZE', 10)
-            options.setdefault('SQLALCHEMY_POOL_TIMEOUT', None)
-            options.setdefault('SQLALCHEMY_POOL_RECYCLE', 7200)
-            options.setdefault('SQLALCHEMY_MAX_OVERFLOW', None)
+            options['pool_recycle'] = 7200  # 2 hours pool recycle
 
         self.stat_engine = sqlalchemy.create_engine(
             app.config['DATABASE'], encoding='latin1', **options)
