@@ -75,7 +75,7 @@ def home():
 
 def register_admin(app):
     from flask.ext.admin import Admin
-    from flask.ext.admin.contrib.sqlamodel import ModelView
+    from flask.ext.admin.contrib.sqla import ModelView
     from stats import Person
     from tools import create_excel
 
@@ -119,12 +119,14 @@ def register_admin(app):
                 "Content-Disposition"] = "attachment; filename=persons.xls"
             return response
 
-        @expose('/')
-        def index_view(self):
-            flask.g.export_url = flask.url_for('personview.export_excel')
-            return super(PersonView, self).index_view()
+        # @expose('/')
+        # def index(self):
+        #     flask.g.export_url = flask.url_for('personview.export_excel')
+        #     return self.render('index.html')
+            #return super(PersonView, self).index()
 
-    admin.add_view(PersonView(stats.Person, db.stat_session))
+    admin.add_view(PersonView(stats.Person, db.stat_session,
+                              endpoint='personview'))
 
     class LogRecordView(ReadOnlyModelView):
         column_searchable_list = ('message',)

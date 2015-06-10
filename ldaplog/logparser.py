@@ -36,7 +36,7 @@ class LogParserState(Model):
 
     __tablename__ = 'ldapmon_state'
 
-    id = sa.Column(sa.Integer, primary_key=True)
+    id = sa.Column('id', sa.Integer, primary_key=True)
     connkey = sa.Column(sa.String(100))
     remote_addr = sa.Column(sa.String(100))
 
@@ -143,7 +143,7 @@ class LogParser(object):
         self.log.debug("Done loading existing connections: %r",
                        self.connections.keys())
 
-        records = session.query(LogRecord).order_by('id')
+        records = session.query(LogRecord).order_by('ID')
         count = records.count()
         more = count > PARSER_CHUNK
         to_remove = []
