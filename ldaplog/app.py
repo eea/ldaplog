@@ -20,8 +20,19 @@ log.setLevel(logging.INFO)
 class Database(object):
 
     def __init__(self, app):
+        options = {
+            'echo': app.config['DEBUG'],
+        }
+
+        if app.config['DATABASE'].startswith('mysql'):
+            options.setdefault('SQLALCHEMY_RECORD_QUERIES', None)
+            options.setdefault('SQLALCHEMY_POOL_SIZE', 10)
+            options.setdefault('SQLALCHEMY_POOL_TIMEOUT', None)
+            options.setdefault('SQLALCHEMY_POOL_RECYCLE', 7200)
+            options.setdefault('SQLALCHEMY_MAX_OVERFLOW', None)
+
         self.stat_engine = sqlalchemy.create_engine(
-            app.config['DATABASE'], encoding='latin1')
+            app.config['DATABASE'], encoding='latin1', **options)
         self.StatSession = sqlalchemy.orm.sessionmaker(bind=self.stat_engine)
         self.stat_session = LocalProxy(lambda: self._get_session('stat'))
 
@@ -118,12 +129,6 @@ def register_admin(app):
             response.headers[
                 "Content-Disposition"] = "attachment; filename=persons.xls"
             return response
-
-        # @expose('/')
-        # def index(self):
-        #     flask.g.export_url = flask.url_for('personview.export_excel')
-        #     return self.render('index.html')
-            #return super(PersonView, self).index()
 
     admin.add_view(PersonView(stats.Person, db.stat_session,
                               endpoint='personview'))
