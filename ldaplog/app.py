@@ -83,6 +83,7 @@ def home():
 def register_admin(app):
     from flask.ext.admin import Admin
     from flask.ext.admin.contrib.sqla import ModelView
+    from flask_admin.menu import MenuLink
     from stats import Person
     from tools import create_excel
 
@@ -138,6 +139,7 @@ def register_admin(app):
 
     # remove Home from top menu
     del admin._menu[0]
+    admin._menu.append(MenuLink("Export", '/admin/personview/export_excel'))
 
     for view in admin._views:
         (app.before_request_funcs.setdefault(view.blueprint.name, [])
