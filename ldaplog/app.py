@@ -14,7 +14,9 @@ import stats
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                                        datefmt='%m-%d %H:%M:%S',
+                                        )
 
 
 class Database(object):
