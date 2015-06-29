@@ -113,7 +113,19 @@ FAQ
 
 There was a problem with the update process, it ran into the max integer size
 limit for the auto_increment value for the id column of ldapmon_state table.
-See this `ticket` for details:
+So, if you see this error::
+
+    sqlalchemy.exc.IntegrityError: (_mysql_exceptions.IntegrityError) (1062,
+    "Duplicate entry '2147483647' for key 'PRIMARY'") [SQL: u'INSERT INTO
+    ldapmon_state (connkey, remote_addr) VALUES (%s, %s)'] [parameters: ('790
+    antilope slapd[19149]:', 'unknown')]
+
+You should reset the auto_increment value on the ldapmon_state table::
+
+    mysql> delete from ldapmon_state where 1;
+    mysql> alter table ldapmon_state AUTO_INCREMENT = 0;
+
+Check this `ticket` for details:
 
 .. _ticket: https://taskman.eionet.europa.eu/issues/26872
 
