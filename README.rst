@@ -106,3 +106,14 @@ There is a good howto_ for configuring `rsyslog` to write log entries to
 
     $ModLoad ommysql
     local4.* :ommysql:db_host,db_name,db_user,db_password
+
+
+FAQ
+===
+
+There was a problem with the update process, it ran into the max integer size
+limit for the auto_increment value for the id column of ldapmon_state table.
+See this `ticket` for details:
+
+.. _ticket: https://taskman.eionet.europa.eu/issues/26872
+
