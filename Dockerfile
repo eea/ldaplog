@@ -12,3 +12,6 @@ RUN pip install -r requirements-dev.txt
 COPY ldaplog/ ./ldaplog
 COPY setup.py ./setup.py
 
+EXPOSE 8000
+
+CMD env python ldaplog/manage.py tornado -p 8000
